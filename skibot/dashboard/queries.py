@@ -6,6 +6,7 @@ excluent les remakes, l'ère courante est celle du protocole (règle n°11).
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import UTC, datetime
 
@@ -182,6 +183,28 @@ def recent_games(conn: sqlite3.Connection, n: int = 20) -> list[dict]:
             "session_idx": r["session_game_index"],
             "omw": r["on_my_way_pings"],
             "duration": f"{r['game_duration_s'] // 60} min",
+        }
+        for r in rows
+    ]
+
+
+def latest_audits(conn: sqlite3.Connection, n: int = 3) -> list[dict]:
+    rows = conn.execute(
+        """SELECT a.verdict_json, a.model, a.cost_usd, m.game_start,
+                  f.my_champion, f.enemy_jungler_champion, f.y_win
+           FROM audits a JOIN matches m USING (match_id) JOIN features f USING (match_id)
+           ORDER BY m.game_start DESC LIMIT ?""",
+        (n,),
+    ).fetchall()
+    return [
+        {
+            "date": datetime.fromtimestamp(r["game_start"] / 1000, tz=UTC)
+            .astimezone().strftime("%d/%m %H:%M"),
+            "win": bool(r["y_win"]),
+            "champ": r["my_champion"],
+            "vs": r["enemy_jungler_champion"] or "?",
+            "verdict": json.loads(r["verdict_json"]),
+            "model": r["model"],
         }
         for r in rows
     ]

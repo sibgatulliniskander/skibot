@@ -87,6 +87,51 @@ def dashboard(port, host):
     app.run(host=host, port=port, debug=False)
 
 
+@main.command()
+@click.option("--limit", default=3, help="Nombre maximum de games a auditer sur ce run.")
+@click.option("--match", "match_id", default=None, help="Auditer une game precise (match_id).")
+def audit(limit, match_id):
+    """Genere les verdicts LLM post-game (dossier de faits + verification des citations)."""
+    import os
+    cfg = load_config(require_key=False)
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise click.ClickException(
+            "ANTHROPIC_API_KEY absente du .env. Cree ta cle sur https://console.anthropic.com "
+            "(API Keys -> Create Key) puis lance `skibot set-anthropic-key`."
+        )
+    conn = db.connect(cfg.db_path)
+    from .auditor import audit as auditor_mod
+    try:
+        if match_id:
+            res = auditor_mod.audit_match(conn, match_id, log=click.echo)
+            click.echo("\n" + res["markdown"])
+            s = {"audited": 1, "cost_usd": res["cost_usd"]}
+        else:
+            s = auditor_mod.run(conn, limit=limit, log=click.echo)
+    except (auditor_mod.AuditError, ValueError) as e:
+        raise click.ClickException(str(e))
+    click.echo("\n{} game(s) auditee(s), cout total {:.3f} $.".format(s["audited"], s["cost_usd"]))
+
+
+@main.command("set-anthropic-key")
+def set_anthropic_key():
+    """Enregistre la cle API Anthropic dans .env (pour l'auditor) et la verifie."""
+    key = click.prompt("Colle ta cle Anthropic (sk-ant-...)", hide_input=True).strip()
+    if not key.startswith("sk-ant-"):
+        click.confirm("La cle ne commence pas par sk-ant- ; continuer quand meme ?", abort=True)
+    path = update_env_value("ANTHROPIC_API_KEY", key)
+    click.echo(f"Cle enregistree dans {path}")
+    import anthropic
+    client = anthropic.Anthropic(api_key=key)
+    try:
+        client.messages.count_tokens(
+            model="claude-opus-5", messages=[{"role": "user", "content": "ping"}]
+        )
+    except anthropic.AuthenticationError:
+        raise click.ClickException("Cette cle est refusee par l'API Anthropic (mal copiee ?).")
+    click.echo("Cle valide - l'auditor est pret (`skibot audit`).")
+
+
 @main.command("set-key")
 def set_key() -> None:
     """Enregistre ta clé Riot dans .env et vérifie qu'elle fonctionne."""

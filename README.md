@@ -25,6 +25,7 @@ skibot collect   # récupère les nouvelles games ranked solo/duo + timelines
 skibot features  # extrait ~60 variables d'analyse par game (table features)
 skibot analyze   # screening + confirmation, rapport markdown dans reports/
 skibot dashboard # dashboard Flask : vue publique / et vue interne /interne
+skibot audit     # verdicts LLM post-game (nécessite ANTHROPIC_API_KEY dans .env)
 skibot status    # état de la base (games, sessions, dernier rang connu)
 ```
 
@@ -38,7 +39,8 @@ doublon, et une interruption ne perd rien.
 - `skibot/features/` — extraction des variables d'analyse (+ cache Data Dragon)
 - `skibot/analysis/` — screening wins/losses (split figé par session, FDR, confirmation indépendante)
 - `skibot/dashboard/` — Flask + Chart.js : courbe LP, WR, leviers, consigne active
-- `skibot/auditor/` — jalon suivant
+- `skibot/auditor/` — verdicts LLM post-game : dossier de faits sourcés + vérification
+  mécanique des citations (aucune affirmation hors donnée)
 - `protocol/` — protocole DMAIC versionné en markdown
 - `migrations/` — schéma SQL (fichiers numérotés, appliqués automatiquement)
 

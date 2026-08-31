@@ -12,6 +12,31 @@
 </div>
 
 <div class="panel">
+  <h2>Verdicts de l'auditor — descriptifs, chaque affirmation cite ses faits [F#]</h2>
+  {% if audits %}
+    {% for a in audits %}
+    <div class="audit">
+      <p class="audit-head">
+        <span class="{{ 'W' if a.win else 'L' }}">{{ 'W' if a.win else 'L' }}</span>
+        {{ a.champ }} vs {{ a.vs }} · {{ a.date }}
+      </p>
+      <p>{{ a.verdict.resume }}</p>
+      <ul>
+        {% for fm in a.verdict.faits_marquants %}
+        <li>{{ fm.texte }} <span class="fact-ids">{{ fm.fact_ids | join(' ') }}</span></li>
+        {% endfor %}
+        <li><em>À revoir :</em> {{ a.verdict.point_a_revoir.texte }}
+            <span class="fact-ids">{{ a.verdict.point_a_revoir.fact_ids | join(' ') }}</span></li>
+      </ul>
+      <p class="audit-lim">Limites : {{ a.verdict.limites }}</p>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="audit-lim">Aucun verdict encore — lancer `skibot audit` après avoir configuré la clé Anthropic.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
   <h2><span class="chip" style="background:#2997ff"></span>on_my_way_pings — médiane glissante (15 games)</h2>
   <div class="chart-wrap-sm"><canvas id="omw"></canvas></div>
 </div>

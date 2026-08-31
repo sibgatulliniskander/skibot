@@ -22,6 +22,8 @@ python -m venv .venv                        # setup (Windows)
 .venv\Scripts\skibot features               # extract analysis variables (features table)
 .venv\Scripts\skibot analyze                # screening + confirmation, report in reports/
 .venv\Scripts\skibot dashboard              # Flask dashboard on http://127.0.0.1:5000
+.venv\Scripts\skibot set-anthropic-key      # store the Anthropic key in .env (validates it)
+.venv\Scripts\skibot audit                  # LLM post-game verdicts (default: 3 newest unaudited)
 .venv\Scripts\skibot status                 # DB state, no API key needed
 ```
 
@@ -66,6 +68,15 @@ Key design decisions:
   Flask caches templates when not in debug: restart `skibot dashboard` after
   template edits. The Windows scheduled task (scripts/collect.bat) chains
   collect + features hourly.
+
+- Auditor (skibot/auditor/): the LLM (claude-opus-5) only ever sees a
+  deterministic "dossier de faits" (numbered facts, each with provenance) built
+  in auditor/dossier.py; verify_citations() mechanically rejects any verdict
+  citing a nonexistent fact or making an uncited claim (one retry, then
+  AuditError — nothing non-conform is stored). Verdicts are descriptive only:
+  the prompt forbids recommendations (consignes belong to the protocol).
+  Structured output via output_config json_schema; verdicts stored in `audits`,
+  shown in the dashboard's internal view.
 
 ## Project rules
 
