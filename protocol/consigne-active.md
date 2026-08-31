@@ -1,6 +1,6 @@
 # Consigne active
 
-**Statut : AUCUNE consigne active — collecte prospective délibérée.**
+**Statut : aucune — phase d'observation jusqu'au 1er décembre 2026 : je joue normalement, la donnée s'accumule.**
 
 Décision du 2026-08-31 : accumulation de games prospectives à l'elo actuel
 jusqu'à la **revue de décembre 2026**, sans consigne. Motif : la baseline

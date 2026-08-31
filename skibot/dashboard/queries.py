@@ -22,6 +22,13 @@ TIERS_FR = {
 DIVISIONS = {"IV": 0, "III": 1, "II": 2, "I": 3}
 NEXT_REVIEW = "2026-12-01"
 TARGET = "MASTER (fin 2027)"
+MONTHS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+             "août", "septembre", "octobre", "novembre", "décembre"]
+
+
+def _month_year(iso: str) -> str:
+    d = datetime.fromisoformat(iso)
+    return f"{MONTHS_FR[d.month - 1]} {d.year}"
 
 
 def lp_absolute(tier: str, division: str, lp: int) -> int:
@@ -64,6 +71,12 @@ def summary(conn: sqlite3.Connection) -> dict:
     days_to_review = (
         datetime.fromisoformat(NEXT_REVIEW).replace(tzinfo=UTC) - datetime.now(UTC)
     ).days
+    next_tier, lp_to_next = None, None
+    if rank and rank["tier"] in TIERS:
+        idx = TIERS.index(rank["tier"])
+        boundary = (idx + 1) * 400
+        lp_to_next = boundary - lp_absolute(rank["tier"], rank["division"], rank["lp"])
+        next_tier = TIERS_FR[TIERS[idx + 1]] if idx + 1 < len(TIERS) else "Master"
     return {
         "rank": (
             f"{TIERS_FR.get(rank['tier'], rank['tier'])} {rank['division']} · {rank['lp']} LP"
@@ -73,6 +86,9 @@ def summary(conn: sqlite3.Connection) -> dict:
         "target": TARGET,
         "games_total": total,
         "era_start": ERA_START,
+        "era_human": _month_year(ERA_START),
+        "next_tier": next_tier,
+        "lp_to_next": lp_to_next,
         "era_games": era["n"],
         "era_wr": round(100 * era["w"] / era["n"], 1) if era["n"] else None,
         "prospective": prospective,

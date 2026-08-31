@@ -2,12 +2,9 @@
 {% set page = 'public' %}
 {% block content %}
 
-<div class="eyebrow">Road to Master · projet data-driven</div>
+<div class="eyebrow">Road to Master</div>
 <h1 class="hero">{{ summary.rank }}</h1>
-<p class="hero-sub">
-  Objectif <strong>Master avant fin 2027</strong> — chaque décision validée par la donnée,
-  zéro assistance in-game.
-</p>
+<p class="hero-sub">Objectif <strong>Master avant fin 2027</strong>, piloté par la donnée.</p>
 
 {% set cur_lp = lp[-1].lp if lp else 0 %}
 {% set pct = (100 * cur_lp / 2800) %}
@@ -25,24 +22,24 @@
 
 <div class="cards">
   <div class="card">
-    <div class="label">Win rate · ère courante</div>
+    <div class="label">Win rate</div>
     <div class="value">{{ summary.era_wr if summary.era_wr is not none else '—' }} %</div>
-    <div class="sub">{{ summary.era_games }} games depuis {{ summary.era_start }}</div>
+    <div class="sub">{{ summary.era_games }} games depuis {{ summary.era_human }}</div>
   </div>
   <div class="card">
     <div class="label">Games analysées</div>
     <div class="value">{{ summary.games_total }}</div>
-    <div class="sub">hors remakes · {{ summary.rank_wl }} cette saison</div>
+    <div class="sub">{{ summary.rank_wl }} cette saison</div>
   </div>
   <div class="card">
-    <div class="label">Pool prospectif</div>
-    <div class="value">{{ summary.prospective }}</div>
-    <div class="sub">games depuis le gel du split</div>
+    <div class="label">Prochain palier</div>
+    <div class="value">{{ summary.next_tier if summary.next_tier else '—' }}</div>
+    <div class="sub">{{ summary.lp_to_next }} LP à prendre</div>
   </div>
   <div class="card">
-    <div class="label">Prochaine revue</div>
+    <div class="label">Première consigne</div>
     <div class="value">J−{{ summary.days_to_review }}</div>
-    <div class="sub">{{ summary.next_review }} · choix de la consigne n°1</div>
+    <div class="sub">décidée par la donnée le 1er décembre</div>
   </div>
 </div>
 
@@ -52,12 +49,12 @@
 </div>
 
 <div class="panel">
-  <h2>Courbe d'elo — LP absolus (1 division = 100 LP)</h2>
+  <h2>Courbe d'elo</h2>
   <div class="chart-wrap"><canvas id="lp"></canvas></div>
 </div>
 
 <div class="panel">
-  <h2>Win rate hebdomadaire — hors remakes, ligne des 50 %</h2>
+  <h2>Win rate par semaine</h2>
   <div class="chart-wrap"><canvas id="wr"></canvas></div>
 </div>
 
