@@ -14,6 +14,11 @@ import pandas as pd
 from ..analysis.run import ERA_START
 
 TIERS = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"]
+TIERS_FR = {
+    "IRON": "Fer", "BRONZE": "Bronze", "SILVER": "Argent", "GOLD": "Or",
+    "PLATINUM": "Platine", "EMERALD": "Émeraude", "DIAMOND": "Diamant",
+    "MASTER": "Master", "GRANDMASTER": "Grand Maître", "CHALLENGER": "Challenger",
+}
 DIVISIONS = {"IV": 0, "III": 1, "II": 2, "I": 3}
 NEXT_REVIEW = "2026-12-01"
 TARGET = "MASTER (fin 2027)"
@@ -61,7 +66,7 @@ def summary(conn: sqlite3.Connection) -> dict:
     ).days
     return {
         "rank": (
-            f"{rank['tier'].capitalize()} {rank['division']} — {rank['lp']} LP"
+            f"{TIERS_FR.get(rank['tier'], rank['tier'])} {rank['division']} · {rank['lp']} LP"
             if rank else "inconnu"
         ),
         "rank_wl": f"{rank['wins']}W / {rank['losses']}L" if rank else "",
@@ -94,7 +99,7 @@ def lp_history(conn: sqlite3.Connection) -> list[dict]:
         out.append({
             "t": r["taken_at"],
             "lp": lp_absolute(r["tier"], r["division"], r["lp"]),
-            "label": f"{r['tier'].capitalize()} {r['division']} {r['lp']} LP",
+            "label": f"{TIERS_FR.get(r['tier'], r['tier'])} {r['division']} {r['lp']} LP",
         })
     return out
 

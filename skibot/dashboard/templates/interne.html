@@ -2,14 +2,23 @@
 {% set page = 'interne' %}
 {% block content %}
 
-<div class="panel consigne">
+<div class="eyebrow">Vue interne · suivi descriptif</div>
+<h1 class="hero" style="font-size: clamp(30px, 4vw, 44px)">Salle des machines</h1>
+<p class="hero-sub">Leviers candidats et dernières games — rien ici n'est un verdict.</p>
+
+<div class="panel">
   <h2>Consigne active</h2>
-  <p>{{ consigne }}</p>
+  <p class="consigne-statement">{{ consigne }}</p>
 </div>
 
 <div class="panel">
-  <h2>Leviers candidats — médiane glissante (15 games) · suivi descriptif, pas un verdict</h2>
-  <div class="chart-wrap"><canvas id="trends"></canvas></div>
+  <h2><span class="chip" style="background:#2997ff"></span>on_my_way_pings — médiane glissante (15 games)</h2>
+  <div class="chart-wrap-sm"><canvas id="omw"></canvas></div>
+</div>
+
+<div class="panel">
+  <h2><span class="chip" style="background:#d95926"></span>vision_advantage_vs_ejgl — médiane glissante (15 games)</h2>
+  <div class="chart-wrap-sm"><canvas id="vision"></canvas></div>
 </div>
 
 <div class="panel">
@@ -34,26 +43,27 @@
 
 <script>
 const T = {{ trends | tojson }};
-new Chart(document.getElementById("trends"), {
-  type: "line",
-  data: {
-    labels: T.labels,
-    datasets: [
-      { label: "on_my_way_pings (méd. gliss.)", data: T.omw, borderColor: "#4fa3ff",
-        pointRadius: 0, tension: .25, yAxisID: "y" },
-      { label: "vision_advantage_vs_ejgl", data: T.vision, borderColor: "#e0a63f",
-        pointRadius: 0, tension: .25, yAxisID: "y2" }
-    ]
-  },
-  options: {
-    maintainAspectRatio: false,
-    plugins: { legend: { labels: { color: "#dce3f2" } } },
-    scales: {
-      x: { ticks: { color: "#8892ab", maxTicksLimit: 12 }, grid: { color: "#232d44" } },
-      y:  { position: "left",  ticks: { color: "#4fa3ff" }, grid: { color: "#232d44" } },
-      y2: { position: "right", ticks: { color: "#e0a63f" }, grid: { display: false } }
+const MUTED = "#86868b", GRID = "rgba(255,255,255,.06)";
+Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+
+function miniLine(id, data, color) {
+  new Chart(document.getElementById(id), {
+    type: "line",
+    data: { labels: T.labels,
+            datasets: [{ data: data, borderColor: color, borderWidth: 2,
+                         pointRadius: 0, tension: .3, spanGaps: true }] },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: MUTED, maxTicksLimit: 10 }, grid: { display: false } },
+        y: { ticks: { color: MUTED, maxTicksLimit: 5 }, grid: { color: GRID } }
+      }
     }
-  }
-});
+  });
+}
+miniLine("omw", T.omw, "#2997ff");
+miniLine("vision", T.vision, "#d95926");
 </script>
 {% endblock %}

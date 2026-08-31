@@ -50,7 +50,7 @@ def test_public_page(app):
     r = app.test_client().get("/")
     assert r.status_code == 200
     html = r.get_data(as_text=True)
-    assert "Platinum III — 49 LP" in html
+    assert "Platine III · 49 LP" in html
     assert "Consigne active" in html
 
 

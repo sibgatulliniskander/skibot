@@ -7,50 +7,130 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0f1420; --panel: #171e2e; --border: #232d44;
-    --text: #dce3f2; --muted: #8892ab; --accent: #4fa3ff;
-    --win: #3ecf8e; --loss: #e5484d;
+    --bg: #000;
+    --panel: rgba(255, 255, 255, .05);
+    --panel-border: rgba(255, 255, 255, .09);
+    --text: #f5f5f7;
+    --muted: #86868b;
+    --accent: #2997ff;
+    --accent-2: #d95926;                 /* série 2 — paire validée CVD avec l'accent */
+    --bar-low: rgba(41, 151, 255, .30);  /* même hue, atténué : semaines < 50 % */
+    --grid: rgba(255, 255, 255, .06);
+    --grid-strong: rgba(255, 255, 255, .22);
+    --grad: linear-gradient(96deg, #2997ff 0%, #6a7bff 55%, #a972ff 100%);
   }
   * { box-sizing: border-box; margin: 0; }
+  html { -webkit-font-smoothing: antialiased; }
   body {
     background: var(--bg); color: var(--text);
-    font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
-    padding: 24px; max-width: 1100px; margin: 0 auto;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    min-height: 100vh; padding: 34px 28px 60px;
   }
-  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-  header h1 { font-size: 22px; }
-  header .goal { color: var(--muted); }
-  nav a { color: var(--accent); text-decoration: none; margin-left: 12px; }
-  nav a.active { text-decoration: underline; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
-  .card .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
-  .card .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
-  .panel h2 { font-size: 15px; margin-bottom: 10px; color: var(--muted); font-weight: 600; }
-  .consigne { border-left: 3px solid var(--accent); }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(640px 440px at 15% -5%, rgba(41, 151, 255, .16), transparent 70%),
+      radial-gradient(720px 520px at 85% 12%, rgba(169, 114, 255, .11), transparent 70%);
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  nav { display: flex; justify-content: flex-end; gap: 22px; margin-bottom: 4px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+  nav a:hover, nav a.active { color: var(--text); }
+
+  .eyebrow {
+    text-align: center; letter-spacing: .18em; font-size: 12px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; margin-top: 18px;
+  }
+  .hero {
+    text-align: center; font-weight: 700; letter-spacing: -.03em;
+    font-size: clamp(44px, 7vw, 80px); line-height: 1.08; margin: 8px 0 10px;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .hero-sub { text-align: center; color: var(--muted); font-size: 17px; margin-bottom: 34px; }
+  .hero-sub strong { color: var(--text); }
+
+  .rail-wrap { max-width: 760px; margin: 0 auto 8px; }
+  .rail {
+    position: relative; height: 6px; border-radius: 999px;
+    background: rgba(255, 255, 255, .10); overflow: visible;
+  }
+  .rail-fill {
+    height: 100%; border-radius: 999px; background: var(--grad);
+    box-shadow: 0 0 18px rgba(41, 151, 255, .55);
+  }
+  .rail-dot {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 14px; height: 14px; border-radius: 50%; background: #fff;
+    box-shadow: 0 0 14px rgba(255, 255, 255, .8);
+  }
+  .rail-labels {
+    display: flex; justify-content: space-between; margin-top: 10px;
+    color: var(--muted); font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+  }
+  .rail-labels .done { color: var(--text); }
+
+  .cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px; margin: 38px 0 18px;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 20px; padding: 20px 24px; backdrop-filter: blur(18px);
+  }
+  .card .label {
+    color: var(--muted); font-size: 12px; text-transform: uppercase;
+    letter-spacing: .1em; font-weight: 600;
+  }
+  .card .value { font-size: 34px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
+  .card .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 22px; padding: 24px 26px; margin-bottom: 18px;
+    backdrop-filter: blur(18px);
+  }
+  .panel h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .14em;
+    color: var(--muted); font-weight: 600; margin-bottom: 16px;
+  }
+  .chip {
+    display: inline-block; width: 9px; height: 9px; border-radius: 3px;
+    margin-right: 7px; vertical-align: 1px;
+  }
+
+  .consigne-statement { font-size: 19px; font-weight: 500; }
+
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
-  .W { color: var(--win); font-weight: 600; } .L { color: var(--loss); font-weight: 600; }
-  footer { color: var(--muted); font-size: 12px; margin-top: 24px; }
-  .chart-wrap { position: relative; height: 300px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grid); }
+  tr:last-child td { border-bottom: none; }
+  th {
+    color: var(--muted); font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .W { color: #4da3ff; font-weight: 700; } .L { color: var(--muted); font-weight: 700; }
+
+  .chart-wrap { position: relative; height: 320px; }
+  .chart-wrap-sm { position: relative; height: 170px; }
+
+  footer {
+    text-align: center; color: var(--muted); font-size: 12px;
+    margin-top: 40px; line-height: 1.7;
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>skibot</h1>
-  <span class="goal">Platine → <strong>Master fin 2027</strong>, data-driven</span>
-  <nav style="margin-left:auto">
+<div class="wrap">
+  <nav>
     <a href="/" class="{{ 'active' if page == 'public' else '' }}">Public</a>
     <a href="/interne" class="{{ 'active' if page == 'interne' else '' }}">Interne</a>
   </nav>
-</header>
-{% block content %}{% endblock %}
-<footer>
-  Données : API Riot (post-game uniquement, aucune assistance in-game). Dernière game : {{ summary.last_game }}.
-  Clause d'honnêteté : tout chiffre affiché est calculé depuis la donnée collectée — jamais estimé.
-</footer>
+  {% block content %}{% endblock %}
+  <footer>
+    Données : API Riot, post-game uniquement — aucune assistance in-game.<br>
+    Clause d'honnêteté : chaque chiffre est calculé depuis la donnée collectée, jamais estimé.
+    Dernière game : {{ summary.last_game }}.
+  </footer>
+</div>
 </body>
 </html>
