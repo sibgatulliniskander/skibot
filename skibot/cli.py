@@ -43,6 +43,22 @@ def collect(max_games: int | None) -> None:
         click.echo(f"Rang actuel : {summary['rank']}")
 
 
+@main.command()
+@click.option("--rebuild", is_flag=True, help="Recalcule toutes les games (apres une evolution de l'extracteur).")
+def features(rebuild):
+    """Extrait les features d'analyse (une ligne par game) depuis la base."""
+    cfg = load_config(require_key=False)
+    conn = db.connect(cfg.db_path)
+    from .features import extract
+    s = extract.run(conn, rebuild=rebuild, log=click.echo)
+    click.echo(f"\n{s['extracted']} game(s) extraite(s), {s['total']} au total.")
+    click.echo(
+        "Couverture : challenges {}/{}, gold@15 {}/{}, remakes exclus : {}.".format(
+            s["with_challenges"], s["total"], s["with_gold15"], s["total"], s["remakes"]
+        )
+    )
+
+
 @main.command("set-key")
 def set_key() -> None:
     """Enregistre ta clé Riot dans .env et vérifie qu'elle fonctionne."""

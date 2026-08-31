@@ -19,6 +19,7 @@ python -m venv .venv                        # setup (Windows)
 .venv\Scripts\ruff check .                  # lint
 .venv\Scripts\skibot set-key                # store/renew the Riot key in .env (validates it)
 .venv\Scripts\skibot collect                # fetch new ranked games (needs .env)
+.venv\Scripts\skibot features               # extract analysis variables (features table)
 .venv\Scripts\skibot status                 # DB state, no API key needed
 ```
 
@@ -69,6 +70,10 @@ Key design decisions:
   conclusions are only drawn after confirmation on an independent sample.
 - Repo is public: the Riot key lives only in `.env` (gitignored); never commit
   `.env` or `data/`.
-- Planned features layer: ~44 variables per game (session context, draft, comp
-  features via Data Dragon, early <15min, mid/late), Y = win/loss,
-  Y2 = gold diff @15.
+- Features layer (skibot/features/): ~60 variables per game in the `features`
+  table (session context, draft/comp via a cached Data Dragon lookup, early game
+  vs enemy jungler, objectives, Riot precomputed challenges), Y = y_win,
+  Y2 = y2_team_gold_diff_15. NULL means "not measurable for that game" — never
+  invent values. `is_remake = 1` rows must be excluded from analyses. Rerun with
+  `skibot features --rebuild` after changing the extractor (bump
+  EXTRACTOR_VERSION in skibot/features/extract.py).

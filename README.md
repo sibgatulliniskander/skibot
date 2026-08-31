@@ -22,6 +22,7 @@ la régénérer et mettre à jour `.env` quand la collecte signale une clé expi
 ```
 skibot set-key   # enregistre/renouvelle la clé Riot dans .env (avec vérification)
 skibot collect   # récupère les nouvelles games ranked solo/duo + timelines
+skibot features  # extrait ~60 variables d'analyse par game (table features)
 skibot status    # état de la base (games, sessions, dernier rang connu)
 ```
 
@@ -32,7 +33,8 @@ doublon, et une interruption ne perd rien.
 
 - `skibot/riot/` — client API Riot (rate limiter 20 req/s et 100 req/2 min)
 - `skibot/collector/` — ingestion match + timeline -> SQLite (`data/skibot.db`)
-- `skibot/features/`, `analysis/`, `auditor/`, `dashboard/` — jalons suivants
+- `skibot/features/` — extraction des variables d'analyse (+ cache Data Dragon)
+- `skibot/analysis/`, `auditor/`, `dashboard/` — jalons suivants
 - `protocol/` — protocole DMAIC versionné en markdown
 - `migrations/` — schéma SQL (fichiers numérotés, appliqués automatiquement)
 
