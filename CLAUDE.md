@@ -74,7 +74,11 @@ Key design decisions:
   independent confirmation sample (alpha = 0.05, same direction required).
   Games outside the split are the prospective pool. Findings tagged "levier"
   (actionable) vs "mécanisme" (descriptive — never turn these into consignes).
-  Reports land in reports/ (gitignored).
+  Reports also grade each candidate's temporal stability on the "current era"
+  (ERA_START in skibot/analysis/run.py, protocol rule 11): a levier that is
+  unstable/weakened in the current era is NOT eligible as a consigne.
+  Reports land in reports/ (gitignored). The protocol state (active consigne,
+  decisions) lives in protocol/ — keep it in sync with any analysis change.
 - Repo is public: the Riot key lives only in `.env` (gitignored); never commit
   `.env` or `data/`.
 - Features layer (skibot/features/): ~60 variables per game in the `features`

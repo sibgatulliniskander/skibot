@@ -84,13 +84,14 @@ def test_insufficient_n_returns_none():
 
 def test_end_to_end_confirms_signal(conn, tmp_path):
     make_dataset(conn)
-    s = run.analyze(conn, out_dir=tmp_path, log=lambda m: None)
+    s = run.analyze(conn, out_dir=tmp_path, era_start="2025-01-01", log=lambda m: None)
     assert s["tested"] == 1  # seule deaths_pre15 est renseignée
     assert s["retained"] == 1
     assert s["confirmed"] == 1
     r = s["results"][0]
     assert r["feature"] == "deaths_pre15"
     assert r["verdict"] == "confirmé"
+    assert "stable" in s["results"][0]["era_label"]
     content = s["report"].read_text(encoding="utf-8")
     assert "Effets CONFIRMÉS (1)" in content
     assert "deaths_pre15" in content

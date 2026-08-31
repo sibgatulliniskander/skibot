@@ -23,6 +23,7 @@ def _result_row(r: dict, with_confirm: bool) -> list[str]:
         c = r.get("confirm")
         row.append(c["effect_label"] if c else "—")
         row.append(f"{c['p']:.2g}" if c else "—")
+        row.append(r.get("era_label", "—"))
     return row
 
 
@@ -55,6 +56,11 @@ def write(out_dir: Path, results: list[dict], meta: dict) -> Path:
         f"- Confirmation : re-test des seules candidates sur l'échantillon "
         f"indépendant, α = {meta['alpha']}, même direction exigée."
     )
+    add(
+        f"- Stabilité temporelle : effet recalculé sur l'ère courante "
+        f"(games depuis {meta['era_start']}, n = {meta['n_era']}) — descriptif ; "
+        f"une candidate instable dans l'ère courante ne peut pas devenir une consigne."
+    )
     add("- Remakes exclus. NULL = non mesuré, jamais imputé.")
     add(
         "- **Tag** : *levier* = actionnable par une consigne ; *mécanisme* = décrit "
@@ -67,7 +73,7 @@ def write(out_dir: Path, results: list[dict], meta: dict) -> Path:
     if confirmed:
         lines += _table(
             ["Variable", "Cat", "Tag", "n", "Effet (exploration)", "p", "q",
-             "Effet (confirmation)", "p conf."],
+             "Effet (confirmation)", "p conf.", "Ère courante"],
             [_result_row(r, with_confirm=True) for r in confirmed],
         )
     else:
@@ -79,7 +85,7 @@ def write(out_dir: Path, results: list[dict], meta: dict) -> Path:
     if not_replicated:
         lines += _table(
             ["Variable", "Cat", "Tag", "n", "Effet (exploration)", "p", "q",
-             "Effet (confirmation)", "p conf."],
+             "Effet (confirmation)", "p conf.", "Ère courante"],
             [_result_row(r, with_confirm=True) for r in not_replicated],
         )
     else:

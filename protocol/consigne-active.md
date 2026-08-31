@@ -1,19 +1,25 @@
 # Consigne active
 
-**Statut : AUCUNE consigne active.**
+**Statut : AUCUNE consigne active — collecte prospective délibérée.**
 
-La baseline est mesurée (828 games, rapport du 2026-08-31). La première consigne
-sera choisie parmi les leviers confirmés ci-dessous, puis formulée selon le
-gabarit de [02-boucle-macro.md](02-boucle-macro.md) AVANT sa première game.
+Décision du 2026-08-31 : accumulation de games prospectives à l'elo actuel
+jusqu'à la **revue de décembre 2026**, sans consigne. Motif : la baseline
+(14 mois) mélange plusieurs ères de process (elo, meta) ; le contrôle de
+robustesse a montré qu'au moins un levier (`scuttle_crabs`) était porté par
+l'ère ancienne. On choisira la consigne n°1 sur un screening propre de l'ère
+courante, enrichi de ~100-150 games nouvelles.
 
-## Candidates (leviers confirmés le 2026-08-31)
+D'ici là : jouer normalement (règle fixe n°14). La collecte et l'extraction
+tournent automatiquement.
 
-| Levier | Baseline (méd. W vs L) | Exposition à la causalité inverse |
-|---|---|---|
-| `scuttle_crabs` | 4 vs 3 | Faible-moyenne (contrôle de rivière early) |
-| `vision_advantage_vs_ejgl` | ~0 vs négatif | Faible-moyenne |
-| `on_my_way_pings` | 9 vs 6 | Moyenne-forte (plus d'occasions quand on gagne) |
-| `pings_total` | 44 vs 40 | Moyenne-forte |
+## Candidates au 2026-08-31 (leviers confirmés + stabilité temporelle)
+
+| Levier | Baseline (méd. W vs L) | Ère courante (≥ 2026-03-01) | Éligibilité |
+|---|---|---|---|
+| `on_my_way_pings` | 9 vs 6 | δ=+0,31, p=5e-8 — **stable** | ✅ candidate n°1 |
+| `vision_advantage_vs_ejgl` | ~0 vs négatif | δ=+0,13, p=0,02 — stable | ✅ candidate |
+| `pings_total` | 44 vs 40 | δ=+0,13, p=0,02 — stable | ✅ candidate |
+| `scuttle_crabs` | 4 vs 3 | δ=+0,12, méd. 4 vs 4 — **affaibli** | ❌ non éligible (règle n°11) |
 
 ---
 

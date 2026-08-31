@@ -38,16 +38,24 @@ Ces règles ne changent jamais, quel que soit le résultat du moment.
 9. Une variable taguée **mécanisme** (towers_diff, baron_diff…) ne fonde jamais
    une consigne : « prendre des tours fait gagner » n'est pas une découverte.
 10. Les remakes (`is_remake = 1`) sont exclus de toute analyse.
+11. **Éligibilité des games** : une décision (choix de consigne) ne s'appuie que
+    sur l'« ère courante » — la fenêtre la plus récente où le process est
+    homogène (elo, meta), définie en revue trimestrielle (actuelle : depuis le
+    2026-03-01). L'historique complet sert aux tendances, au contexte et aux
+    tests de stabilité temporelle — jamais seul à choisir une consigne. Un
+    levier dont l'effet est instable ou affaibli dans l'ère courante n'est pas
+    éligible comme consigne. [Décision du 2026-08-31 — le rang par game n'étant
+    pas fourni par Riot, l'ère est un proxy temporel : inféré, pas prouvé.]
 
 ## Conduite de l'expérimentation
 
-11. **Une seule consigne active à la fois.** Jamais deux changements simultanés :
+12. **Une seule consigne active à la fois.** Jamais deux changements simultanés :
     sinon l'effet mesuré n'est attribuable à rien.
-12. Une consigne se juge d'abord sur le **X** (le comportement a-t-il changé ?)
+13. Une consigne se juge d'abord sur le **X** (le comportement a-t-il changé ?)
     puis sur le **Y** (le résultat a-t-il bougé ?). Un Y qui bouge sans X qui
     bouge ne valide rien.
-13. Pendant la collecte d'une baseline ou d'une fenêtre de mesure : on joue
+14. Pendant la collecte d'une baseline ou d'une fenêtre de mesure : on joue
     normalement, on ne « joue pas pour la stat ».
-14. Le verdict d'une consigne tombe à la date/volume prévu à l'avance — pas
+15. Le verdict d'une consigne tombe à la date/volume prévu à l'avance — pas
     avant (même si ça a l'air génial), pas après (même si « encore quelques
     games »).

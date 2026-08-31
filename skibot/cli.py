@@ -60,12 +60,14 @@ def features(rebuild):
 
 
 @main.command()
-def analyze():
+@click.option("--era-start", default=None, help="Debut de l'ere courante (defaut : voir analysis/run.py).")
+def analyze(era_start):
     """Screening exploration + confirmation independante, rapport dans reports/."""
     cfg = load_config(require_key=False)
     conn = db.connect(cfg.db_path)
     from .analysis import run as analysis_run
-    s = analysis_run.analyze(conn, log=click.echo)
+    kwargs = {"era_start": era_start} if era_start else {}
+    s = analysis_run.analyze(conn, log=click.echo, **kwargs)
     click.echo(
         "{} variables testees, {} candidates au screening, {} confirmees.".format(
             s["tested"], s["retained"], s["confirmed"]

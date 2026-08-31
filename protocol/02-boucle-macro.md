@@ -21,7 +21,7 @@ documenté en stream quand c'est possible.
 3. **Journal hebdo** : 3 lignes dans `protocol/journal.md` (date, games jouées,
    état de la consigne, observation éventuelle). Committé.
 4. **Rien changer d'autre.** Pas de nouveau champion pool, pas de nouvelle
-   routine en parallèle — une seule variable à la fois (règle fixe n°11).
+   routine en parallèle — une seule variable à la fois (règle fixe n°12).
 
 ## Cycle de vie d'une consigne
 

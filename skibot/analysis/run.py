@@ -18,6 +18,10 @@ from . import report, split, stats
 
 FDR_Q = 0.10
 ALPHA_CONFIRM = 0.05
+# Début de "l'ère courante" (process homogène : elo/meta actuels). Révisé en
+# revue trimestrielle uniquement. L'historique complet sert aux tendances et
+# aux tests de stabilité, jamais seul à choisir une consigne.
+ERA_START = "2026-03-01"
 DAYS_FR = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 
@@ -36,8 +40,9 @@ def _hour_bin(h) -> str | None:
 
 def load_dataset(conn: sqlite3.Connection) -> pd.DataFrame:
     df = pd.read_sql_query(
-        """SELECT f.*, s.split FROM features f
+        """SELECT f.*, s.split, m.game_start FROM features f
            JOIN analysis_split s USING (match_id)
+           JOIN matches m USING (match_id)
            WHERE f.is_remake = 0""",
         conn,
     )
@@ -52,6 +57,7 @@ def analyze(
     conn: sqlite3.Connection,
     *,
     out_dir: Path | None = None,
+    era_start: str = ERA_START,
     log: Callable[[str], None] = print,
 ) -> dict:
     split_info = split.ensure_split(conn)
@@ -97,6 +103,25 @@ def analyze(
         else:
             r["verdict"] = "non répliqué"
 
+    # Stabilité temporelle : effet recalculé sur l'ère courante (descriptif —
+    # une candidate n'est proposable comme consigne que si elle y tient).
+    era_ms = int(pd.Timestamp(era_start).value // 1_000_000)
+    era_df = df[df["game_start"] >= era_ms]
+    for r in (r for r in results if r["retained"]):
+        e = stats.test_feature(era_df, specs[r["feature"]])
+        r["era"] = e
+        if e is None:
+            r["era_label"] = "— (effectifs insuffisants)"
+        else:
+            same_dir = r["direction"] == 0 or e["direction"] == r["direction"]
+            if e["p"] > 0.05 or not same_dir:
+                verdict = "INSTABLE : ne pas en faire une consigne"
+            elif e["effect_abs"] < r["effect_abs"] / 2:
+                verdict = "AFFAIBLI (effet réduit de moitié ou plus) : prudence"
+            else:
+                verdict = "stable"
+            r["era_label"] = f"{e['effect_label']}, p={e['p']:.2g} — {verdict}"
+
     out_dir = out_dir or PROJECT_ROOT / "reports"
     path = report.write(
         out_dir,
@@ -105,6 +130,8 @@ def analyze(
             "n_explore": len(explore),
             "n_confirm": len(confirm),
             "n_prospective": n_prospective,
+            "n_era": len(era_df),
+            "era_start": era_start,
             "fdr_q": FDR_Q,
             "alpha": ALPHA_CONFIRM,
         },
