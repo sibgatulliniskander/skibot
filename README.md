@@ -24,6 +24,7 @@ skibot set-key   # enregistre/renouvelle la clé Riot dans .env (avec vérificat
 skibot collect   # récupère les nouvelles games ranked solo/duo + timelines
 skibot features  # extrait ~60 variables d'analyse par game (table features)
 skibot analyze   # screening + confirmation, rapport markdown dans reports/
+skibot dashboard # dashboard Flask : vue publique / et vue interne /interne
 skibot status    # état de la base (games, sessions, dernier rang connu)
 ```
 
@@ -36,7 +37,8 @@ doublon, et une interruption ne perd rien.
 - `skibot/collector/` — ingestion match + timeline -> SQLite (`data/skibot.db`)
 - `skibot/features/` — extraction des variables d'analyse (+ cache Data Dragon)
 - `skibot/analysis/` — screening wins/losses (split figé par session, FDR, confirmation indépendante)
-- `skibot/auditor/`, `dashboard/` — jalons suivants
+- `skibot/dashboard/` — Flask + Chart.js : courbe LP, WR, leviers, consigne active
+- `skibot/auditor/` — jalon suivant
 - `protocol/` — protocole DMAIC versionné en markdown
 - `migrations/` — schéma SQL (fichiers numérotés, appliqués automatiquement)
 

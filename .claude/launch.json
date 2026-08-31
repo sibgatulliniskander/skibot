@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dashboard",
+      "runtimeExecutable": ".venv/Scripts/skibot.exe",
+      "runtimeArgs": [
+        "dashboard"
+      ],
+      "port": 5000
+    }
+  ]
+}

@@ -21,6 +21,7 @@ python -m venv .venv                        # setup (Windows)
 .venv\Scripts\skibot collect                # fetch new ranked games (needs .env)
 .venv\Scripts\skibot features               # extract analysis variables (features table)
 .venv\Scripts\skibot analyze                # screening + confirmation, report in reports/
+.venv\Scripts\skibot dashboard              # Flask dashboard on http://127.0.0.1:5000
 .venv\Scripts\skibot status                 # DB state, no API key needed
 ```
 
@@ -59,6 +60,12 @@ Key design decisions:
   recorded in `schema_migrations`. Never edit an applied migration — add a new file.
 - Rate limiting: dual sliding window (20 req/1s, 100 req/2min) in
   `riot/rate_limiter.py`, plus `Retry-After` handling on 429.
+- Dashboard (skibot/dashboard/): read-only SQLite access, data injected
+  server-side into Jinja templates (no separate API), Chart.js from CDN.
+  The consigne status shown comes verbatim from protocol/consigne-active.md.
+  Flask caches templates when not in debug: restart `skibot dashboard` after
+  template edits. The Windows scheduled task (scripts/collect.bat) chains
+  collect + features hourly.
 
 ## Project rules
 

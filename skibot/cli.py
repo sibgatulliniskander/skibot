@@ -76,6 +76,17 @@ def analyze(era_start):
     click.echo("Rapport : {}".format(s["report"]))
 
 
+@main.command()
+@click.option("--port", default=5000, help="Port d'ecoute (defaut 5000).")
+@click.option("--host", default="127.0.0.1", help="Interface (127.0.0.1 = local uniquement).")
+def dashboard(port, host):
+    """Lance le dashboard Flask (vue publique / et vue interne /interne)."""
+    from .dashboard.app import create_app
+    app = create_app()
+    click.echo(f"Dashboard : http://{host}:{port}  (Ctrl+C pour arreter)")
+    app.run(host=host, port=port, debug=False)
+
+
 @main.command("set-key")
 def set_key() -> None:
     """Enregistre ta clé Riot dans .env et vérifie qu'elle fonctionne."""

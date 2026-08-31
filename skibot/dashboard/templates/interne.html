@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set page = 'interne' %}
+{% block content %}
+
+<div class="panel consigne">
+  <h2>Consigne active</h2>
+  <p>{{ consigne }}</p>
+</div>
+
+<div class="panel">
+  <h2>Leviers candidats — médiane glissante (15 games) · suivi descriptif, pas un verdict</h2>
+  <div class="chart-wrap"><canvas id="trends"></canvas></div>
+</div>
+
+<div class="panel">
+  <h2>Dernières games</h2>
+  <table>
+    <tr><th>Date</th><th>Résultat</th><th>Champion</th><th>vs jungler</th>
+        <th>Gold diff @15 (vs ejgl)</th><th>OMW pings</th><th>Game n° (session)</th><th>Durée</th></tr>
+    {% for g in games %}
+    <tr>
+      <td>{{ g.date }}</td>
+      <td class="{{ 'W' if g.win else 'L' }}">{{ 'W' if g.win else 'L' }}</td>
+      <td>{{ g.champ }}</td>
+      <td>{{ g.vs }}</td>
+      <td>{{ g.gd15 if g.gd15 is not none else '—' }}</td>
+      <td>{{ g.omw if g.omw is not none else '—' }}</td>
+      <td>{{ g.session_idx }}</td>
+      <td>{{ g.duration }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<script>
+const T = {{ trends | tojson }};
+new Chart(document.getElementById("trends"), {
+  type: "line",
+  data: {
+    labels: T.labels,
+    datasets: [
+      { label: "on_my_way_pings (méd. gliss.)", data: T.omw, borderColor: "#4fa3ff",
+        pointRadius: 0, tension: .25, yAxisID: "y" },
+      { label: "vision_advantage_vs_ejgl", data: T.vision, borderColor: "#e0a63f",
+        pointRadius: 0, tension: .25, yAxisID: "y2" }
+    ]
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: "#dce3f2" } } },
+    scales: {
+      x: { ticks: { color: "#8892ab", maxTicksLimit: 12 }, grid: { color: "#232d44" } },
+      y:  { position: "left",  ticks: { color: "#4fa3ff" }, grid: { color: "#232d44" } },
+      y2: { position: "right", ticks: { color: "#e0a63f" }, grid: { display: false } }
+    }
+  }
+});
+</script>
+{% endblock %}

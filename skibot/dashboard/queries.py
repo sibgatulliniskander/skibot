@@ -1,0 +1,166 @@
+"""Requêtes du dashboard — lecture seule, tout vient de SQLite.
+
+Les chiffres affichés publiquement suivent la clause d'honnêteté : WR et KPIs
+excluent les remakes, l'ère courante est celle du protocole (règle n°11).
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from datetime import UTC, datetime
+
+import pandas as pd
+
+from ..analysis.run import ERA_START
+
+TIERS = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"]
+DIVISIONS = {"IV": 0, "III": 1, "II": 2, "I": 3}
+NEXT_REVIEW = "2026-12-01"
+TARGET = "MASTER (fin 2027)"
+
+
+def lp_absolute(tier: str, division: str, lp: int) -> int:
+    """LP cumulés depuis Iron IV 0 LP (1 division = 100 LP, 1 tier = 400)."""
+    if tier in ("MASTER", "GRANDMASTER", "CHALLENGER"):
+        return len(TIERS) * 400 + lp
+    return TIERS.index(tier) * 400 + DIVISIONS[division] * 100 + lp
+
+
+def tier_ticks() -> list[dict]:
+    """Frontières de tiers pour l'axe Y du graphe LP."""
+    return [{"value": i * 400, "label": t.capitalize()} for i, t in enumerate(TIERS)] + [
+        {"value": len(TIERS) * 400, "label": "Master"}
+    ]
+
+
+def _era_ms() -> int:
+    return int(datetime.fromisoformat(ERA_START).replace(tzinfo=UTC).timestamp() * 1000)
+
+
+def summary(conn: sqlite3.Connection) -> dict:
+    rank = conn.execute(
+        "SELECT * FROM rank_snapshots ORDER BY snapshot_id DESC LIMIT 1"
+    ).fetchone()
+    era = conn.execute(
+        """SELECT COUNT(*) n, COALESCE(SUM(y_win), 0) w FROM features f
+           JOIN matches m USING (match_id)
+           WHERE f.is_remake = 0 AND m.game_start >= ?""",
+        (_era_ms(),),
+    ).fetchone()
+    prospective = conn.execute(
+        """SELECT COUNT(*) c FROM features f
+           LEFT JOIN analysis_split s USING (match_id)
+           WHERE f.is_remake = 0 AND s.match_id IS NULL"""
+    ).fetchone()["c"]
+    total = conn.execute(
+        "SELECT COUNT(*) c FROM features WHERE is_remake = 0"
+    ).fetchone()["c"]
+    last = conn.execute("SELECT MAX(game_start) ts FROM matches").fetchone()["ts"]
+    days_to_review = (
+        datetime.fromisoformat(NEXT_REVIEW).replace(tzinfo=UTC) - datetime.now(UTC)
+    ).days
+    return {
+        "rank": (
+            f"{rank['tier'].capitalize()} {rank['division']} — {rank['lp']} LP"
+            if rank else "inconnu"
+        ),
+        "rank_wl": f"{rank['wins']}W / {rank['losses']}L" if rank else "",
+        "target": TARGET,
+        "games_total": total,
+        "era_start": ERA_START,
+        "era_games": era["n"],
+        "era_wr": round(100 * era["w"] / era["n"], 1) if era["n"] else None,
+        "prospective": prospective,
+        "next_review": NEXT_REVIEW,
+        "days_to_review": max(days_to_review, 0),
+        "last_game": (
+            datetime.fromtimestamp(last / 1000, tz=UTC).astimezone().strftime("%d/%m/%Y %H:%M")
+            if last else "—"
+        ),
+    }
+
+
+def lp_history(conn: sqlite3.Connection) -> list[dict]:
+    """Un point par snapshot (dédoublonné par heure) : la courbe publique."""
+    rows = conn.execute(
+        "SELECT taken_at, tier, division, lp FROM rank_snapshots ORDER BY snapshot_id"
+    ).fetchall()
+    out, seen = [], set()
+    for r in rows:
+        key = r["taken_at"][:13]  # 1 point max par heure
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({
+            "t": r["taken_at"],
+            "lp": lp_absolute(r["tier"], r["division"], r["lp"]),
+            "label": f"{r['tier'].capitalize()} {r['division']} {r['lp']} LP",
+        })
+    return out
+
+
+def weekly_wr(conn: sqlite3.Connection, weeks: int = 16) -> list[dict]:
+    df = pd.read_sql_query(
+        """SELECT m.game_start, f.y_win FROM features f
+           JOIN matches m USING (match_id) WHERE f.is_remake = 0""",
+        conn,
+    )
+    if df.empty:
+        return []
+    df["week"] = (
+        pd.to_datetime(df["game_start"], unit="ms")
+        .dt.to_period("W").dt.start_time.dt.strftime("%d/%m")
+    )
+    keys = df.drop_duplicates("week").sort_values("game_start")["week"].tolist()[-weeks:]
+    g = df.groupby("week").agg(n=("y_win", "size"), w=("y_win", "sum"))
+    return [
+        {"week": k, "n": int(g.loc[k, "n"]), "wr": round(100 * g.loc[k, "w"] / g.loc[k, "n"], 1)}
+        for k in keys
+    ]
+
+
+def levier_trends(conn: sqlite3.Connection, window: int = 15, games: int = 150) -> dict:
+    """Médianes glissantes des leviers candidats (suivi interne, pas un verdict)."""
+    df = pd.read_sql_query(
+        """SELECT m.game_start, f.on_my_way_pings, f.vision_advantage_vs_ejgl
+           FROM features f JOIN matches m USING (match_id)
+           WHERE f.is_remake = 0 ORDER BY m.game_start""",
+        conn,
+    ).tail(games)
+    if df.empty:
+        return {"labels": [], "omw": [], "vision": []}
+    labels = pd.to_datetime(df["game_start"], unit="ms").dt.strftime("%d/%m").tolist()
+    roll = lambda s: [
+        None if pd.isna(v) else round(float(v), 3)
+        for v in s.rolling(window, min_periods=5).median()
+    ]
+    return {
+        "labels": labels,
+        "omw": roll(df["on_my_way_pings"]),
+        "vision": roll(df["vision_advantage_vs_ejgl"]),
+    }
+
+
+def recent_games(conn: sqlite3.Connection, n: int = 20) -> list[dict]:
+    rows = conn.execute(
+        """SELECT m.game_start, m.game_duration_s, f.y_win, f.my_champion,
+                  f.enemy_jungler_champion, f.gold_diff_ejgl_15, f.session_game_index,
+                  f.on_my_way_pings
+           FROM features f JOIN matches m USING (match_id)
+           WHERE f.is_remake = 0 ORDER BY m.game_start DESC LIMIT ?""",
+        (n,),
+    ).fetchall()
+    return [
+        {
+            "date": datetime.fromtimestamp(r["game_start"] / 1000, tz=UTC)
+            .astimezone().strftime("%d/%m %H:%M"),
+            "win": bool(r["y_win"]),
+            "champ": r["my_champion"],
+            "vs": r["enemy_jungler_champion"] or "?",
+            "gd15": r["gold_diff_ejgl_15"],
+            "session_idx": r["session_game_index"],
+            "omw": r["on_my_way_pings"],
+            "duration": f"{r['game_duration_s'] // 60} min",
+        }
+        for r in rows
+    ]

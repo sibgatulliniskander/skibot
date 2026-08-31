@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% set page = 'public' %}
+{% block content %}
+
+<div class="cards">
+  <div class="card">
+    <div class="label">Rang actuel</div>
+    <div class="value">{{ summary.rank }}</div>
+    <div class="sub">{{ summary.rank_wl }} cette saison</div>
+  </div>
+  <div class="card">
+    <div class="label">WR ère courante</div>
+    <div class="value">{{ summary.era_wr if summary.era_wr is not none else '—' }} %</div>
+    <div class="sub">{{ summary.era_games }} games depuis {{ summary.era_start }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Games en base</div>
+    <div class="value">{{ summary.games_total }}</div>
+    <div class="sub">hors remakes</div>
+  </div>
+  <div class="card">
+    <div class="label">Pool prospectif</div>
+    <div class="value">{{ summary.prospective }}</div>
+    <div class="sub">revue dans {{ summary.days_to_review }} j ({{ summary.next_review }})</div>
+  </div>
+</div>
+
+<div class="panel consigne">
+  <h2>Consigne active</h2>
+  <p>{{ consigne }}</p>
+</div>
+
+<div class="panel">
+  <h2>Courbe d'elo (LP absolus — 1 division = 100 LP)</h2>
+  <div class="chart-wrap"><canvas id="lp"></canvas></div>
+</div>
+
+<div class="panel">
+  <h2>Win rate hebdomadaire (hors remakes)</h2>
+  <div class="chart-wrap"><canvas id="wr"></canvas></div>
+</div>
+
+<script>
+const LP = {{ lp | tojson }};
+const TICKS = {{ ticks | tojson }};
+const WEEKLY = {{ weekly | tojson }};
+const tickLabels = Object.fromEntries(TICKS.map(t => [t.value, t.label]));
+const SHORT = ["Fer", "Bronze", "Argent", "Or", "Plat", "Emeraude", "Diamant"];
+const DIVS = ["IV", "III", "II", "I"];
+function absToLabel(v) {
+  if (v >= SHORT.length * 400) return `Master ${v - SHORT.length * 400}`;
+  if (v < 0) return "";
+  const tier = Math.floor(v / 400), div = Math.floor((v % 400) / 100);
+  return `${SHORT[tier]} ${DIVS[div]} ${v % 100}`;
+}
+
+new Chart(document.getElementById("lp"), {
+  type: "line",
+  data: { labels: LP.map(p => p.t.slice(0, 10)),
+          datasets: [{ data: LP.map(p => p.lp), borderColor: "#4fa3ff",
+                       backgroundColor: "rgba(79,163,255,.15)", fill: true,
+                       pointRadius: 0, tension: .25 }] },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => LP[ctx.dataIndex].label } } },
+    scales: {
+      x: { ticks: { color: "#8892ab", maxTicksLimit: 10 }, grid: { color: "#232d44" } },
+      y: { ticks: { color: "#8892ab", stepSize: 50,
+                    callback: v => tickLabels[v] ?? absToLabel(v) },
+           grid: { color: ctx => ctx.tick.value % 400 === 0 ? "#3a4667" : "#232d44" } }
+    }
+  }
+});
+
+new Chart(document.getElementById("wr"), {
+  type: "bar",
+  data: { labels: WEEKLY.map(w => w.week),
+          datasets: [{ data: WEEKLY.map(w => w.wr),
+                       backgroundColor: WEEKLY.map(w => w.wr >= 50 ? "#3ecf8e" : "#e5484d") }] },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${WEEKLY[ctx.dataIndex].wr}% sur ${WEEKLY[ctx.dataIndex].n} games` } } },
+    scales: {
+      x: { ticks: { color: "#8892ab" }, grid: { display: false } },
+      y: { min: 0, max: 100, ticks: { color: "#8892ab", callback: v => v + "%" },
+           grid: { color: ctx => ctx.tick.value === 50 ? "#3a4667" : "#232d44" } }
+    }
+  }
+});
+</script>
+{% endblock %}
