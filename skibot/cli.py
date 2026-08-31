@@ -59,6 +59,21 @@ def features(rebuild):
     )
 
 
+@main.command()
+def analyze():
+    """Screening exploration + confirmation independante, rapport dans reports/."""
+    cfg = load_config(require_key=False)
+    conn = db.connect(cfg.db_path)
+    from .analysis import run as analysis_run
+    s = analysis_run.analyze(conn, log=click.echo)
+    click.echo(
+        "{} variables testees, {} candidates au screening, {} confirmees.".format(
+            s["tested"], s["retained"], s["confirmed"]
+        )
+    )
+    click.echo("Rapport : {}".format(s["report"]))
+
+
 @main.command("set-key")
 def set_key() -> None:
     """Enregistre ta clé Riot dans .env et vérifie qu'elle fonctionne."""

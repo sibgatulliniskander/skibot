@@ -20,6 +20,7 @@ python -m venv .venv                        # setup (Windows)
 .venv\Scripts\skibot set-key                # store/renew the Riot key in .env (validates it)
 .venv\Scripts\skibot collect                # fetch new ranked games (needs .env)
 .venv\Scripts\skibot features               # extract analysis variables (features table)
+.venv\Scripts\skibot analyze                # screening + confirmation, report in reports/
 .venv\Scripts\skibot status                 # DB state, no API key needed
 ```
 
@@ -66,8 +67,14 @@ Key design decisions:
 - **Honesty clause** (drives `auditor/` and `analysis/`): every claim must be
   labeled "proven by event X" or "inferred from Y" — never assert what the data
   cannot prove.
-- **Analysis discipline**: variable screening happens on an exploration sample;
-  conclusions are only drawn after confirmation on an independent sample.
+- **Analysis discipline** (skibot/analysis/): the explore/confirm split is
+  assigned ONCE, by session (never by game), persisted in `analysis_split` and
+  NEVER redrawn (redrawing = p-hacking). Screening uses Mann-Whitney/Fisher/chi2
+  + Benjamini-Hochberg (q <= 0.10); candidates are then re-tested on the
+  independent confirmation sample (alpha = 0.05, same direction required).
+  Games outside the split are the prospective pool. Findings tagged "levier"
+  (actionable) vs "mécanisme" (descriptive — never turn these into consignes).
+  Reports land in reports/ (gitignored).
 - Repo is public: the Riot key lives only in `.env` (gitignored); never commit
   `.env` or `data/`.
 - Features layer (skibot/features/): ~60 variables per game in the `features`
