@@ -76,7 +76,13 @@ Key design decisions:
   AuditError — nothing non-conform is stored). Verdicts are descriptive only:
   the prompt forbids recommendations (consignes belong to the protocol).
   Structured output via output_config json_schema; verdicts stored in `audits`,
-  shown in the dashboard's internal view.
+  shown in the dashboard's internal view. The dossier carries personal baselines
+  (W/L medians + percentile per metric, computed in code) so verdicts highlight
+  deviations from the player's own norms; verdicts also pick 1-3 tags from the
+  closed taxonomy in auditor/prompts.py (aggregated in the dashboard as
+  hypothesis candidates for the analyst — never conclusions), ask one factual
+  replay question, and track the active consigne's X when protocol/consigne.json
+  exists. verify_citations also rejects prescriptive wording (PRESCRIPTIVE_MARKERS).
 
 ## Project rules
 

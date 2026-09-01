@@ -208,3 +208,18 @@ def latest_audits(conn: sqlite3.Connection, n: int = 3) -> list[dict]:
         }
         for r in rows
     ]
+
+
+def hypothesis_tags(conn: sqlite3.Connection, last_n: int = 20) -> dict:
+    """Compte les tags des derniers verdicts : hypothèses candidates pour l'analyste."""
+    rows = conn.execute(
+        """SELECT a.verdict_json FROM audits a JOIN matches m USING (match_id)
+           ORDER BY m.game_start DESC LIMIT ?""",
+        (last_n,),
+    ).fetchall()
+    counts: dict[str, int] = {}
+    for r in rows:
+        for t in json.loads(r["verdict_json"]).get("tags", []):
+            counts[t] = counts.get(t, 0) + 1
+    ordered = sorted(counts.items(), key=lambda kv: -kv[1])
+    return {"n_verdicts": len(rows), "tags": [{"tag": t, "count": c} for t, c in ordered]}

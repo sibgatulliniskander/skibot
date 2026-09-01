@@ -65,6 +65,7 @@ def create_app(db_path: Path | None = None) -> Flask:
                 trends=queries.levier_trends(conn),
                 games=queries.recent_games(conn),
                 audits=queries.latest_audits(conn),
+                hypotheses=queries.hypothesis_tags(conn),
                 consigne=consigne_status(),
             )
         finally:

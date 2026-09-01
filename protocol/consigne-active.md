@@ -34,6 +34,14 @@ tournent automatiquement.
 - **Critère de succès (Y)** : figé avant le départ
 - **Verdict** : (à la date prévue, pas avant, pas après)
 
+À l'activation, créer aussi `protocol/consigne.json` (lu par l'auditor pour le
+suivi du X dans chaque verdict) :
+
+```json
+{"numero": 1, "comportement": "...", "metric": "on_my_way_pings",
+ "operator": ">=", "target": 8, "activated": "2026-12-01"}
+```
+
 ## Historique des consignes
 
 | n° | Consigne | Fenêtre | X bougé ? | Y | Verdict |

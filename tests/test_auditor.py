@@ -10,7 +10,8 @@ T0 = 1_756_000_000_000
 
 def insert_game(conn, match_id="EUW1_1", win=True):
     conn.execute(
-        "INSERT INTO sessions (session_id, started_at, ended_at, n_games) VALUES (1, ?, ?, 1)",
+        "INSERT OR IGNORE INTO sessions (session_id, started_at, ended_at, n_games)"
+        " VALUES (1, ?, ?, 1)",
         (T0, T0 + 1800_000),
     )
     conn.execute(
@@ -55,6 +56,9 @@ def make_verdict(fact_ids):
             {"texte": "Quatre scuttles prises.", "fact_ids": [fact_ids[1]]},
         ],
         "point_a_revoir": {"texte": "Une mort après 25 min.", "fact_ids": [fact_ids[2]]},
+        "tags": ["late_deaths"],
+        "question_replay": "Que s'est-il passé à la minute 27 ?",
+        "suivi_consigne": None,
         "limites": "Les positions de wards et les invades ne sont pas mesurés.",
     }
 
@@ -149,3 +153,35 @@ def test_free_text_citations_are_verified():
     assert any("F42" in p for p in problems)
     v["resume"] = "Game marquée par un early déficitaire (F1, F2)."
     assert audit.verify_citations(v, valid) == []
+
+
+def test_verifier_rejects_prescriptive_language():
+    valid = {"F1", "F2", "F3"}
+    v = make_verdict(["F1", "F2", "F3"])
+    v["question_replay"] = "Il faudrait ganker plus tôt, non ?"
+    assert any("prescriptive" in p for p in audit.verify_citations(v, valid))
+
+
+def test_verifier_rejects_bad_tags():
+    valid = {"F1", "F2", "F3"}
+    v = make_verdict(["F1", "F2", "F3"])
+    v["tags"] = ["tag_invente"]
+    assert any("taxonomie" in p for p in audit.verify_citations(v, valid))
+    v["tags"] = []
+    assert any("nombre de tags" in p for p in audit.verify_citations(v, valid))
+
+
+def test_dossier_baselines_and_consigne(conn):
+    # 40 games pour dépasser MIN_BASELINE_N, puis un dossier avec repères + consigne
+    for i in range(40):
+        insert_game(conn, match_id=f"EUW1_B{i}", win=i % 2 == 0)
+    baselines = dossier.compute_baselines(conn)
+    assert "scuttle_crabs" in baselines
+    consigne = {"numero": 1, "comportement": "test", "metric": "on_my_way_pings",
+                "operator": ">=", "target": 8}
+    d = dossier.build(conn, "EUW1_B0", baselines=baselines, consigne=consigne)
+    text = dossier.render(d)
+    assert "repère perso" in text
+    assert "percentile" in text
+    assert "CONSIGNE ACTIVE n°1" in text
+    assert "objectif >= 8" in text
