@@ -19,6 +19,66 @@ LEVIER = "levier"
 MECANISME = "mécanisme"
 
 MIN_GROUP_N = 10  # effectif minimal par groupe (W/L, ou valeur 0/1)
+
+# Libellés français des variables (affichage dashboard)
+FR_LABELS = {
+    "session_game_index": "Position de la game dans la session",
+    "games_played_today": "Games déjà jouées dans la journée",
+    "minutes_since_prev_game": "Pause avant la game",
+    "prev_game_result": "Résultat de la game précédente",
+    "current_streak": "Série en cours",
+    "hour_bin": "Moment de la journée",
+    "day_of_week": "Jour de la semaine",
+    "session_length_so_far_min": "Durée de session déjà écoulée",
+    "my_champion": "Mon champion",
+    "my_champ_recent_games": "Familiarité récente avec le champion",
+    "my_champ_recent_wr": "Win rate récent sur le champion",
+    "enemy_jungler_champion": "Jungler adverse",
+    "side": "Côté de la carte",
+    "i_am_autofilled": "Autofill",
+    "ally_tank_count": "Tanks alliés",
+    "enemy_tank_count": "Tanks ennemis",
+    "ally_ranged_count": "Champions à distance alliés",
+    "enemy_ranged_count": "Champions à distance ennemis",
+    "ally_ap_ratio": "Profil AP de mon équipe",
+    "enemy_ap_ratio": "Profil AP adverse",
+    "gold_diff_ejgl_5": "Avance d'or sur le jungler adverse (5 min)",
+    "gold_diff_ejgl_10": "Avance d'or sur le jungler adverse (10 min)",
+    "gold_diff_ejgl_15": "Avance d'or sur le jungler adverse (15 min)",
+    "xp_diff_ejgl_10": "Avance d'XP sur le jungler adverse (10 min)",
+    "cs_diff_ejgl_10": "Avance de CS sur le jungler adverse (10 min)",
+    "kills_pre15": "Kills avant 15 min",
+    "deaths_pre15": "Morts avant 15 min",
+    "assists_pre15": "Assists avant 15 min",
+    "deaths_pre8": "Morts avant 8 min",
+    "first_blood_team": "First blood pour mon équipe",
+    "first_dragon_team": "Premier dragon pour mon équipe",
+    "grubs_team": "Grubs prises par mon équipe",
+    "herald_team": "Hérauts pris par mon équipe",
+    "plates_diff": "Différentiel de plates",
+    "dragons_diff": "Différentiel de dragons",
+    "soul_team": "Âme draconique pour mon équipe",
+    "barons_diff": "Différentiel de Barons",
+    "atakhan_team": "Atakhan pour mon équipe",
+    "towers_diff": "Différentiel de tours",
+    "deaths_post25": "Morts après 25 min",
+    "kill_participation": "Participation aux kills",
+    "damage_share": "Part des dégâts de l'équipe",
+    "wards_placed": "Wards posées",
+    "wards_killed": "Wards détruites",
+    "control_wards_bought": "Pink wards achetées",
+    "jungle_cs_before_10": "CS jungle avant 10 min",
+    "counter_jungle_diff": "Counter-jungle (CS volés)",
+    "scuttle_crabs": "Scuttles prises",
+    "initial_crab_secured": "Première scuttle sécurisée",
+    "early_gank_kills": "Kills de gank en early",
+    "early_jungle_duel_kills": "Duels jungle gagnés en early",
+    "solo_kills": "Solo kills",
+    "epic_monster_steals": "Vols d'objectifs",
+    "vision_advantage_vs_ejgl": "Avantage de vision sur le jungler adverse",
+    "pings_total": "Pings émis",
+    "on_my_way_pings": "Pings « on my way »",
+}
 MIN_LEVEL_N = 20  # effectif minimal d'un niveau catégoriel
 
 
@@ -142,6 +202,8 @@ def _test_continuous(sub: pd.DataFrame, spec: FeatureSpec) -> dict | None:
         "p": float(p),
         "direction": 1 if delta > 0 else -1,
         "effect_abs": abs(delta),
+        "med_w": float(wins.median()),
+        "med_l": float(losses.median()),
         "effect_label": (
             f"δ={delta:+.2f} (méd. W {wins.median():g} vs L {losses.median():g})"
         ),
@@ -168,6 +230,8 @@ def _test_binary(sub: pd.DataFrame, spec: FeatureSpec) -> dict | None:
         "p": float(p),
         "direction": 1 if diff > 0 else -1,
         "effect_abs": abs(diff) / 100,
+        "wr1": wr1,
+        "wr0": wr0,
         "effect_label": f"WR {wr1:.0f}% si oui vs {wr0:.0f}% si non ({diff:+.0f} pts)",
     })
     return r

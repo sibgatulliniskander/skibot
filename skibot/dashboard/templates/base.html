@@ -24,7 +24,7 @@
   body {
     background: var(--bg); color: var(--text);
     font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-    min-height: 100vh; padding: 34px 28px 60px;
+    min-height: 100vh;
   }
   body::before {
     content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
@@ -32,14 +32,36 @@
       radial-gradient(640px 440px at 15% -5%, rgba(41, 151, 255, .16), transparent 70%),
       radial-gradient(720px 520px at 85% 12%, rgba(169, 114, 255, .11), transparent 70%);
   }
-  .wrap { max-width: 1040px; margin: 0 auto; }
-  nav { display: flex; justify-content: flex-end; gap: 22px; margin-bottom: 4px; }
-  nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
-  nav a:hover, nav a.active { color: var(--text); }
+
+  /* ---- barre de navigation fixe (blur) ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(22px) saturate(1.4);
+    background: rgba(8, 10, 18, .72);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+  }
+  .topbar-inner {
+    max-width: 1040px; margin: 0 auto; padding: 12px 28px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .brand {
+    font-weight: 700; font-size: 17px; letter-spacing: -.02em; text-decoration: none;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .topbar nav { margin-left: auto; display: flex; gap: 4px; }
+  .topbar nav a {
+    color: var(--muted); text-decoration: none; font-size: 14px;
+    padding: 6px 12px; border-radius: 999px; transition: color .18s, background .18s;
+  }
+  .topbar nav a:hover { color: var(--text); background: rgba(255, 255, 255, .07); }
+  .topbar nav a.active { color: var(--text); background: rgba(255, 255, 255, .1); }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 26px 28px 60px; }
 
   .eyebrow {
     text-align: center; letter-spacing: .18em; font-size: 12px; font-weight: 600;
-    color: var(--muted); text-transform: uppercase; margin-top: 18px;
+    color: var(--muted); text-transform: uppercase; margin-top: 14px;
   }
   .hero {
     text-align: center; font-weight: 700; letter-spacing: -.03em;
@@ -47,7 +69,10 @@
     background: var(--grad); -webkit-background-clip: text; background-clip: text;
     color: transparent;
   }
-  .hero-sub { text-align: center; color: var(--muted); font-size: 17px; margin-bottom: 34px; }
+  .hero-sub {
+    text-align: center; color: var(--muted); font-size: 17px;
+    max-width: 640px; margin: 0 auto 34px;
+  }
   .hero-sub strong { color: var(--text); }
 
   .rail-wrap { max-width: 760px; margin: 0 auto 8px; }
@@ -77,7 +102,9 @@
   .card {
     background: var(--panel); border: 1px solid var(--panel-border);
     border-radius: 20px; padding: 20px 24px; backdrop-filter: blur(18px);
+    transition: border-color .2s;
   }
+  .card:hover { border-color: rgba(255, 255, 255, .16); }
   .card .label {
     color: var(--muted); font-size: 12px; text-transform: uppercase;
     letter-spacing: .1em; font-weight: 600;
@@ -99,6 +126,33 @@
     margin-right: 7px; vertical-align: 1px;
   }
 
+  /* ---- cartes d'effets (vue Analyste) ---- */
+  .effect-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+  .effect {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 18px; padding: 18px 20px; backdrop-filter: blur(18px);
+    transition: border-color .2s, transform .2s;
+  }
+  .effect:hover { border-color: rgba(255, 255, 255, .18); transform: translateY(-2px); }
+  .effect h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .effect .compare { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .effect .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+    letter-spacing: .02em;
+  }
+  .badge.levier { color: #7cc0ff; background: rgba(41, 151, 255, .13); }
+  .badge.meca { color: var(--muted); background: rgba(255, 255, 255, .07); }
+  .badge.ok { color: #5fdba7; background: rgba(62, 207, 142, .13); }
+  .badge.warn { color: #e8bd6d; background: rgba(224, 166, 63, .15); }
+  .badge.bad { color: #ff9a97; background: rgba(229, 72, 77, .15); }
+  .badge.neutral { color: var(--text); background: rgba(255, 255, 255, .09); }
+
   .consigne-statement { font-size: 19px; font-weight: 500; }
 
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -110,7 +164,7 @@
   }
   .W { color: #4da3ff; font-weight: 700; } .L { color: var(--muted); font-weight: 700; }
 
-  .audit { padding: 12px 0; border-bottom: 1px solid var(--grid); }
+  .audit { padding: 14px 0; border-bottom: 1px solid var(--grid); }
   .audit:last-child { border-bottom: none; }
   .audit-head { font-weight: 600; margin-bottom: 4px; }
   .audit ul { margin: 6px 0 6px 20px; }
@@ -124,16 +178,24 @@
     text-align: center; color: var(--muted); font-size: 12px;
     margin-top: 40px; line-height: 1.7;
   }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
 </style>
 </head>
 <body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/">skibot</a>
+    <nav>
+      <a href="/" class="{{ 'active' if page == 'public' else '' }}">Public</a>
+      <a href="/interne" class="{{ 'active' if page == 'interne' else '' }}">Interne</a>
+      <a href="/audits" class="{{ 'active' if page == 'audits' else '' }}">Auditor</a>
+      <a href="/analyse" class="{{ 'active' if page == 'analyse' else '' }}">Analyste</a>
+    </nav>
+  </div>
+</header>
 <div class="wrap">
-  <nav>
-    <a href="/" class="{{ 'active' if page == 'public' else '' }}">Public</a>
-    <a href="/interne" class="{{ 'active' if page == 'interne' else '' }}">Interne</a>
-    <a href="/audits" class="{{ 'active' if page == 'audits' else '' }}">Auditor</a>
-    <a href="/analyse" class="{{ 'active' if page == 'analyse' else '' }}">Analyste</a>
-  </nav>
   {% block content %}{% endblock %}
   <footer>
     Données API Riot, post-game uniquement · aucune assistance in-game · aucun chiffre estimé

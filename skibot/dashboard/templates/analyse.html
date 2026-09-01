@@ -2,65 +2,104 @@
 {% set page = 'analyse' %}
 {% block content %}
 
-<div class="eyebrow">Analyste · statistiques sur l'échantillon</div>
-<h1 class="hero" style="font-size: clamp(30px, 4vw, 44px)">Dernier screening</h1>
+<div class="eyebrow">Analyste</div>
+<h1 class="hero" style="font-size: clamp(30px, 4vw, 44px)">Ce que la donnée a prouvé</h1>
 
 {% if analysis %}
 <p class="hero-sub">
-  Généré le {{ analysis.generated }} — {{ analysis.meta.n_explore }} games d'exploration,
-  {{ analysis.meta.n_confirm }} de confirmation, {{ analysis.meta.n_prospective }} prospectives ·
-  {{ analysis.n_tested }} variables testées.
+  Qu'est-ce qui distingue mes victoires de mes défaites ? Chaque effet ci-dessous a passé
+  <strong>deux épreuves</strong> : détecté sur un premier échantillon de games, puis retrouvé
+  sur un second, indépendant. Ce qui n'a passé qu'une épreuve est en bas de page.
 </p>
 
+{% set leviers = analysis.confirmed | selectattr('tag', 'equalto', 'levier') | list %}
+{% set mecas = analysis.confirmed | rejectattr('tag', 'equalto', 'levier') | list %}
+
 <div class="panel">
-  <h2>Effets confirmés ({{ analysis.confirmed | length }}) — screening + réplication sur échantillon indépendant</h2>
-  <table>
-    <tr><th>Variable</th><th>Tag</th><th>Exploration</th><th>Confirmation</th><th>Ère courante</th></tr>
-    {% for r in analysis.confirmed %}
-    <tr>
-      <td><code>{{ r.feature }}</code></td>
-      <td>{{ r.tag }}</td>
-      <td>{{ r.effect_label }}</td>
-      <td>{{ r.confirm_label or '—' }}</td>
-      <td>{{ r.era_label or '—' }}</td>
-    </tr>
+  <h2>Sur quoi je peux agir — {{ leviers | length }} levier(s) confirmé(s)</h2>
+  <div class="effect-grid">
+    {% for r in leviers %}
+    <div class="effect">
+      <h3>{{ r.label }}</h3>
+      <p class="compare">{{ r.human or r.effect_label }}</p>
+      <div class="badges">
+        <span class="badge levier">actionnable</span>
+        <span class="badge neutral">{{ r.strength }}</span>
+        {% if r.era_verdict == 'stable' %}
+        <span class="badge ok">toujours d'actualité</span>
+        {% elif r.era_verdict == 'affaibli' %}
+        <span class="badge warn">s'affaiblit récemment</span>
+        {% elif r.era_verdict == 'instable' %}
+        <span class="badge bad">plus d'actualité</span>
+        {% endif %}
+      </div>
+      {% if r.note %}<p class="note">⚠ {{ r.note }}</p>{% endif %}
+    </div>
     {% endfor %}
-  </table>
-  <p class="audit-lim" style="margin-top: 10px">
-    Un <em>levier</em> est actionnable par une consigne ; un <em>mécanisme</em> décrit comment
-    les games se gagnent et ne peut pas en fonder une. Un levier instable ou affaibli dans
-    l'ère courante n'est pas éligible (règle n°11 du protocole).
+  </div>
+  <p class="audit-lim" style="margin-top: 14px">
+    « Actionnable » = un comportement que je peux décider de changer. Attention : lien prouvé
+    ne veut pas dire cause prouvée — c'est la consigne testée sur les games futures qui tranchera.
+    Un levier qui « s'affaiblit » ou n'est « plus d'actualité » ne peut pas devenir une consigne.
   </p>
 </div>
 
 <div class="panel">
-  <h2>Candidats non répliqués ({{ analysis.failed | length }}) — exploratoire, à revoir avec plus de données</h2>
+  <h2>Comment mes games se gagnent — {{ mecas | length }} constat(s)</h2>
+  <div class="effect-grid">
+    {% for r in mecas %}
+    <div class="effect">
+      <h3>{{ r.label }}</h3>
+      <p class="compare">{{ r.human or r.effect_label }}</p>
+      <div class="badges">
+        <span class="badge meca">constat</span>
+        <span class="badge neutral">{{ r.strength }}</span>
+        {% if r.era_verdict == 'stable' %}
+        <span class="badge ok">toujours d'actualité</span>
+        {% elif r.era_verdict == 'affaibli' %}
+        <span class="badge warn">s'affaiblit récemment</span>
+        {% elif r.era_verdict == 'instable' %}
+        <span class="badge bad">plus d'actualité</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="audit-lim" style="margin-top: 14px">
+    Ces constats décrivent le déroulé de mes games gagnées vs perdues (« prendre des tours fait
+    gagner »). Ils servent à comprendre, jamais à fonder une consigne.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Pistes non confirmées ({{ analysis.failed | length }}) — vues une fois, pas retrouvées à la contre-épreuve</h2>
   {% if analysis.failed %}
   <table>
-    <tr><th>Variable</th><th>Tag</th><th>Exploration</th><th>Confirmation</th></tr>
+    <tr><th>Variable</th><th>Ce qu'on avait cru voir</th><th>Verdict</th></tr>
     {% for r in analysis.failed %}
     <tr>
-      <td><code>{{ r.feature }}</code></td>
-      <td>{{ r.tag }}</td>
-      <td>{{ r.effect_label }}</td>
-      <td>{{ r.confirm_label or '—' }}</td>
+      <td>{{ r.label }}</td>
+      <td>{{ r.human or r.effect_label }}</td>
+      <td class="fact-ids">non retrouvé — probablement un hasard, à revoir avec plus de games</td>
     </tr>
     {% endfor %}
   </table>
   {% else %}
-  <p class="audit-lim">Aucun.</p>
+  <p class="audit-lim">Aucune.</p>
   {% endif %}
 </div>
 
 <div class="panel">
-  <h2>Méthode</h2>
-  <p class="audit-lim" style="font-style: normal">
-    Split exploration/confirmation tiré par session et figé (jamais re-tiré). Screening
-    Mann-Whitney / Fisher / χ² corrigé Benjamini-Hochberg (q ≤ {{ analysis.meta.fdr_q }}) ;
-    confirmation à α = {{ analysis.meta.alpha }}, même direction exigée. Stabilité temporelle
-    évaluée sur l'ère courante (depuis {{ analysis.meta.era_start }}, n = {{ analysis.meta.n_era }}).
-    Un effet confirmé reste corrélationnel : seule l'expérimentation prospective (consigne)
-    établit la causalité.
+  <h2>D'où sortent ces chiffres</h2>
+  <p style="color: var(--muted); font-size: 14px">
+    Analyse du {{ analysis.generated }} sur {{ analysis.meta.n_explore + analysis.meta.n_confirm }}
+    games classées ({{ analysis.n_tested }} variables testées). Les games sont partagées une fois
+    pour toutes en deux groupes : le premier sert à <em>chercher</em> les effets, le second —
+    jamais regardé pendant la recherche — sert à les <em>contre-vérifier</em>. Les tests tiennent
+    compte du fait qu'on teste beaucoup de variables à la fois (sinon le hasard seul en ferait
+    « découvrir »). La colonne d'actualité vérifie que l'effet tient encore sur les games récentes
+    (depuis {{ analysis.meta.era_start }}), à mon niveau actuel. Prochaine mise à jour : revue du
+    1er décembre, avec les games accumulées d'ici là.
   </p>
 </div>
 {% else %}

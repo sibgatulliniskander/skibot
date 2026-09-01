@@ -17,6 +17,7 @@ import pandas as pd
 
 from ..config import PROJECT_ROOT
 from . import report, split, stats
+from .stats import FR_LABELS
 
 FDR_Q = 0.10
 ALPHA_CONFIRM = 0.05
@@ -117,10 +118,13 @@ def analyze(
         else:
             same_dir = r["direction"] == 0 or e["direction"] == r["direction"]
             if e["p"] > 0.05 or not same_dir:
+                r["era_verdict"] = "instable"
                 verdict = "INSTABLE : ne pas en faire une consigne"
             elif e["effect_abs"] < r["effect_abs"] / 2:
+                r["era_verdict"] = "affaibli"
                 verdict = "AFFAIBLI (effet réduit de moitié ou plus) : prudence"
             else:
+                r["era_verdict"] = "stable"
                 verdict = "stable"
             r["era_label"] = f"{e['effect_label']}, p={e['p']:.2g} — {verdict}"
 
@@ -154,6 +158,36 @@ def analyze(
     }
 
 
+def _fmt_value(feature: str, v: float) -> str:
+    if feature in ("kill_participation", "damage_share"):
+        return f"{v:.0%}"
+    r = round(v, 2 if abs(v) < 1 else 1)
+    return "0" if r == 0 else f"{r:g}"
+
+
+def _human(r: dict) -> str | None:
+    """Phrase de comparaison en langage courant, pour le dashboard."""
+    if "med_w" in r:
+        return (
+            f"{_fmt_value(r['feature'], r['med_w'])} quand je gagne · "
+            f"{_fmt_value(r['feature'], r['med_l'])} quand je perds"
+        )
+    if "wr1" in r:
+        return f"{r['wr1']:.0f} % de victoires quand c'est le cas · {r['wr0']:.0f} % sinon"
+    return None
+
+
+def _strength(r: dict) -> str:
+    cuts = (0.4, 0.2, 0.1) if r["kind"] == "binaire" else (0.5, 0.25, 0.12)
+    if r["effect_abs"] >= cuts[0]:
+        return "effet très fort"
+    if r["effect_abs"] >= cuts[1]:
+        return "effet fort"
+    if r["effect_abs"] >= cuts[2]:
+        return "effet net"
+    return "effet léger"
+
+
 def _write_latest_json(out_dir: Path, results: list[dict], meta: dict) -> None:
     """Export structuré du dernier screening, consommé par le dashboard."""
     export = []
@@ -163,10 +197,14 @@ def _write_latest_json(out_dir: Path, results: list[dict], meta: dict) -> None:
             "feature": r["feature"], "kind": r["kind"], "category": r["category"],
             "tag": r["tag"], "n": r["n"], "p": r["p"], "q": r["q"],
             "retained": r["retained"], "effect_label": r["effect_label"],
+            "label": FR_LABELS.get(r["feature"], r["feature"]),
+            "human": _human(r),
+            "strength": _strength(r),
             "verdict": r.get("verdict"),
             "confirm_label": c["effect_label"] if c else None,
             "confirm_p": c["p"] if c else None,
             "era_label": r.get("era_label"),
+            "era_verdict": r.get("era_verdict"),
             "note": r.get("note", ""),
         })
     out_dir.mkdir(parents=True, exist_ok=True)
