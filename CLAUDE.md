@@ -68,7 +68,10 @@ Key design decisions:
   server-side into Jinja templates (no separate API), Chart.js from CDN.
   The consigne status shown comes verbatim from protocol/consigne-active.md.
   Routes: / (public), /interne, /audits (all verdicts + hypothesis tags),
-  /analyse (renders reports/analyse_latest.json written by `skibot analyze`).
+  /analyse (renders reports/analyse_latest.json written by `skibot analyze`),
+  /benchmark (renders reports/benchmark_latest.json), /carte (kill/death map
+  from timeline positions — canvas over the Data Dragon minimap, client-side
+  filters; ward positions are never mapped, Riot does not provide them).
   Flask caches templates when not in debug: restart `skibot dashboard` after
   template edits. The Windows scheduled task (scripts/collect.bat) chains
   collect + features hourly.

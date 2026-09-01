@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% set page = 'benchmark' %}
+{% block content %}
+
+<div class="eyebrow">Benchmark</div>
+<h1 class="hero" style="font-size: clamp(30px, 4vw, 44px)">Moi vs les junglers Diamant</h1>
+
+{% if bench %}
+<p class="hero-sub">
+  Où en suis-je par rapport au niveau que je vise ? Ma valeur habituelle positionnée
+  dans la distribution de <strong>{{ bench.n_bench_junglers }} junglers
+  {{ bench.bench_tier }}</strong> (mêmes compteurs Riot des deux côtés).
+</p>
+
+<div class="panel">
+  <h2>Mes plus gros écarts — {{ bench.big_gaps | length }} métrique(s) loin de leur norme</h2>
+  {% if bench.big_gaps %}
+  <div class="effect-grid">
+    {% for m in bench.big_gaps %}
+    <div class="effect">
+      <h3>{{ m.label }}</h3>
+      <p class="compare">Moi : {{ m.me_h }} · Eux : {{ m.them_h }}</p>
+      <p class="note">
+        Ma valeur habituelle est
+        {% if m.my_percentile_in_bench < 50 %}
+        plus basse que celle de {{ (100 - m.my_percentile_in_bench) | round | int }} % d'entre eux
+        {% else %}
+        plus haute que celle de {{ m.my_percentile_in_bench | round | int }} % d'entre eux
+        {% endif %}
+        (leur zone typique : {{ m.bench_p25 | round(1) }} à {{ m.bench_p75 | round(1) }})
+      </p>
+      <div class="badges">
+        <span class="badge {{ 'bad' if m.gap >= 30 else 'warn' }}">écart marqué</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="audit-lim">Aucun écart marqué — profil dans la norme Diamant sur ces métriques.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Dans la norme Diamant — {{ bench.in_norm | length }} métrique(s)</h2>
+  <table>
+    <tr><th>Métrique</th><th>Moi</th><th>Eux (médiane)</th><th>Ma position chez eux</th></tr>
+    {% for m in bench.in_norm %}
+    <tr>
+      <td>{{ m.label }}</td>
+      <td>{{ m.me_h }}</td>
+      <td>{{ m.them_h }}</td>
+      <td class="fact-ids">{{ m.my_percentile_in_bench | round | int }}e percentile</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Comment lire cette page</h2>
+  <p style="color: var(--muted); font-size: 14px">
+    Comparaison du {{ bench.generated[:10] }} : mes {{ bench.n_me }} games depuis
+    {{ bench.era_start }} face à {{ bench.n_bench_junglers }} lignes de junglers
+    {{ bench.bench_tier }} (chaque game crawlée fournit ses deux junglers). Seules les
+    métriques mesurées par le même compteur Riot des deux côtés sont comparées — jamais
+    de pommes contre des poires. Un écart vis-à-vis d'eux est un <em>générateur
+    d'hypothèses</em> : il dit où je diffère du niveau cible, pas pourquoi ni si combler
+    l'écart fera gagner — c'est le rôle des consignes testées. Rafraîchir l'échantillon :
+    <code>skibot bench-collect</code> puis <code>skibot bench</code>.
+  </p>
+</div>
+{% else %}
+<p class="hero-sub">Aucun benchmark disponible — lancer `skibot bench-collect` puis `skibot bench`.</p>
+{% endif %}
+{% endblock %}

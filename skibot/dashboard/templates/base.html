@@ -171,6 +171,18 @@
   .fact-ids { color: var(--muted); font-size: 11px; }
   .audit-lim { color: var(--muted); font-size: 12px; font-style: italic; }
 
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filters button {
+    font: inherit; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: rgba(255, 255, 255, .06); border: 1px solid var(--panel-border);
+    border-radius: 999px; padding: 6px 14px; transition: color .15s, background .15s;
+  }
+  .filters button:hover { color: var(--text); }
+  .filters button.on { color: var(--text); background: rgba(41, 151, 255, .22);
+    border-color: rgba(41, 151, 255, .4); }
+  .map-wrap { display: flex; justify-content: center; }
+  .map-wrap canvas { max-width: 100%; border-radius: 14px; }
+
   .chart-wrap { position: relative; height: 320px; }
   .chart-wrap-sm { position: relative; height: 170px; }
 
@@ -192,6 +204,8 @@
       <a href="/interne" class="{{ 'active' if page == 'interne' else '' }}">Interne</a>
       <a href="/audits" class="{{ 'active' if page == 'audits' else '' }}">Auditor</a>
       <a href="/analyse" class="{{ 'active' if page == 'analyse' else '' }}">Analyste</a>
+      <a href="/benchmark" class="{{ 'active' if page == 'benchmark' else '' }}">Benchmark</a>
+      <a href="/carte" class="{{ 'active' if page == 'carte' else '' }}">Carte</a>
     </nav>
   </div>
 </header>

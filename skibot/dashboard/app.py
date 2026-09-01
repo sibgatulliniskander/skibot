@@ -85,6 +85,30 @@ def create_app(db_path: Path | None = None) -> Flask:
         finally:
             conn.close()
 
+    @app.route("/benchmark")
+    def benchmark():
+        conn = _connect(app.config["DB_PATH"])
+        try:
+            return render_template(
+                "benchmark.html",
+                summary=queries.summary(conn),
+                bench=queries.latest_benchmark(app.config["REPORTS_DIR"]),
+            )
+        finally:
+            conn.close()
+
+    @app.route("/carte")
+    def carte():
+        conn = _connect(app.config["DB_PATH"])
+        try:
+            return render_template(
+                "carte.html",
+                summary=queries.summary(conn),
+                points=queries.map_points(conn),
+            )
+        finally:
+            conn.close()
+
     @app.route("/analyse")
     def analyse():
         conn = _connect(app.config["DB_PATH"])

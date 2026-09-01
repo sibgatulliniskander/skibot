@@ -271,3 +271,49 @@ def latest_analysis(reports_dir) -> dict | None:
         "failed": failed,
         "n_tested": len(results),
     }
+
+
+def latest_benchmark(reports_dir) -> dict | None:
+    """Dernière comparaison moi vs Diamant (benchmark_latest.json)."""
+    from pathlib import Path
+
+    path = Path(reports_dir) / "benchmark_latest.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not data.get("metrics"):
+        return None
+    for m in data["metrics"]:
+        pct_fmt = m["metric"] in ("kill_participation", "damage_share")
+        fmt = (lambda v: f"{v:.0%}") if pct_fmt else (lambda v: f"{round(v, 2):g}")
+        m["me_h"] = fmt(m["my_median"])
+        m["them_h"] = fmt(m["bench_median"])
+    data["big_gaps"] = [m for m in data["metrics"] if m["gap"] >= 20]
+    data["in_norm"] = [m for m in data["metrics"] if m["gap"] < 20]
+    return data
+
+
+def map_points(conn: sqlite3.Connection) -> dict:
+    """Positions de mes kills et morts (ère courante, hors remakes).
+
+    Positions prouvées par les events CHAMPION_KILL de la timeline —
+    contrairement aux wards, jamais cartographiées (non mesurables).
+    """
+    def q(role: str) -> list[list]:
+        rows = conn.execute(
+            f"""SELECT e.pos_x, e.pos_y, e.timestamp_ms / 60000 AS minute, f.y_win
+                FROM timeline_events e
+                JOIN participants p ON p.match_id = e.match_id AND p.is_me = 1
+                JOIN features f ON f.match_id = e.match_id
+                JOIN matches m ON m.match_id = e.match_id
+                WHERE e.type = 'CHAMPION_KILL' AND e.{role} = p.participant_id
+                  AND e.pos_x IS NOT NULL AND f.is_remake = 0
+                  AND m.game_start >= ?""",
+            (_era_ms(),),
+        ).fetchall()
+        return [[r["pos_x"], r["pos_y"], int(r["minute"]), r["y_win"]] for r in rows]
+
+    return {"deaths": q("victim_id"), "kills": q("killer_id"), "era_start": ERA_START}
