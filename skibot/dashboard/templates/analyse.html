@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% set page = 'analyse' %}
+{% block content %}
+
+<div class="eyebrow">Analyste · statistiques sur l'échantillon</div>
+<h1 class="hero" style="font-size: clamp(30px, 4vw, 44px)">Dernier screening</h1>
+
+{% if analysis %}
+<p class="hero-sub">
+  Généré le {{ analysis.generated }} — {{ analysis.meta.n_explore }} games d'exploration,
+  {{ analysis.meta.n_confirm }} de confirmation, {{ analysis.meta.n_prospective }} prospectives ·
+  {{ analysis.n_tested }} variables testées.
+</p>
+
+<div class="panel">
+  <h2>Effets confirmés ({{ analysis.confirmed | length }}) — screening + réplication sur échantillon indépendant</h2>
+  <table>
+    <tr><th>Variable</th><th>Tag</th><th>Exploration</th><th>Confirmation</th><th>Ère courante</th></tr>
+    {% for r in analysis.confirmed %}
+    <tr>
+      <td><code>{{ r.feature }}</code></td>
+      <td>{{ r.tag }}</td>
+      <td>{{ r.effect_label }}</td>
+      <td>{{ r.confirm_label or '—' }}</td>
+      <td>{{ r.era_label or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="audit-lim" style="margin-top: 10px">
+    Un <em>levier</em> est actionnable par une consigne ; un <em>mécanisme</em> décrit comment
+    les games se gagnent et ne peut pas en fonder une. Un levier instable ou affaibli dans
+    l'ère courante n'est pas éligible (règle n°11 du protocole).
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Candidats non répliqués ({{ analysis.failed | length }}) — exploratoire, à revoir avec plus de données</h2>
+  {% if analysis.failed %}
+  <table>
+    <tr><th>Variable</th><th>Tag</th><th>Exploration</th><th>Confirmation</th></tr>
+    {% for r in analysis.failed %}
+    <tr>
+      <td><code>{{ r.feature }}</code></td>
+      <td>{{ r.tag }}</td>
+      <td>{{ r.effect_label }}</td>
+      <td>{{ r.confirm_label or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="audit-lim">Aucun.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Méthode</h2>
+  <p class="audit-lim" style="font-style: normal">
+    Split exploration/confirmation tiré par session et figé (jamais re-tiré). Screening
+    Mann-Whitney / Fisher / χ² corrigé Benjamini-Hochberg (q ≤ {{ analysis.meta.fdr_q }}) ;
+    confirmation à α = {{ analysis.meta.alpha }}, même direction exigée. Stabilité temporelle
+    évaluée sur l'ère courante (depuis {{ analysis.meta.era_start }}, n = {{ analysis.meta.n_era }}).
+    Un effet confirmé reste corrélationnel : seule l'expérimentation prospective (consigne)
+    établit la causalité.
+  </p>
+</div>
+{% else %}
+<p class="hero-sub">Aucune analyse disponible — lancer `skibot analyze`.</p>
+{% endif %}
+{% endblock %}

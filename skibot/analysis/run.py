@@ -7,8 +7,10 @@ direction) sur l'échantillon de confirmation.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -123,6 +125,11 @@ def analyze(
             r["era_label"] = f"{e['effect_label']}, p={e['p']:.2g} — {verdict}"
 
     out_dir = out_dir or PROJECT_ROOT / "reports"
+    _write_latest_json(out_dir, results, {
+        "n_explore": len(explore), "n_confirm": len(confirm),
+        "n_prospective": n_prospective, "n_era": len(era_df),
+        "era_start": era_start, "fdr_q": FDR_Q, "alpha": ALPHA_CONFIRM,
+    })
     path = report.write(
         out_dir,
         results,
@@ -145,3 +152,29 @@ def analyze(
         "report": path,
         "results": results,
     }
+
+
+def _write_latest_json(out_dir: Path, results: list[dict], meta: dict) -> None:
+    """Export structuré du dernier screening, consommé par le dashboard."""
+    export = []
+    for r in results:
+        c = r.get("confirm")
+        export.append({
+            "feature": r["feature"], "kind": r["kind"], "category": r["category"],
+            "tag": r["tag"], "n": r["n"], "p": r["p"], "q": r["q"],
+            "retained": r["retained"], "effect_label": r["effect_label"],
+            "verdict": r.get("verdict"),
+            "confirm_label": c["effect_label"] if c else None,
+            "confirm_p": c["p"] if c else None,
+            "era_label": r.get("era_label"),
+            "note": r.get("note", ""),
+        })
+    out_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated": datetime.now(UTC).isoformat(timespec="seconds"),
+        "meta": meta,
+        "results": export,
+    }
+    (out_dir / "analyse_latest.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8"
+    )

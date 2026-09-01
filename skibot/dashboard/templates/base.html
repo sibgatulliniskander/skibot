@@ -131,6 +131,8 @@
   <nav>
     <a href="/" class="{{ 'active' if page == 'public' else '' }}">Public</a>
     <a href="/interne" class="{{ 'active' if page == 'interne' else '' }}">Interne</a>
+    <a href="/audits" class="{{ 'active' if page == 'audits' else '' }}">Auditor</a>
+    <a href="/analyse" class="{{ 'active' if page == 'analyse' else '' }}">Analyste</a>
   </nav>
   {% block content %}{% endblock %}
   <footer>

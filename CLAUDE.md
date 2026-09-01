@@ -65,6 +65,8 @@ Key design decisions:
 - Dashboard (skibot/dashboard/): read-only SQLite access, data injected
   server-side into Jinja templates (no separate API), Chart.js from CDN.
   The consigne status shown comes verbatim from protocol/consigne-active.md.
+  Routes: / (public), /interne, /audits (all verdicts + hypothesis tags),
+  /analyse (renders reports/analyse_latest.json written by `skibot analyze`).
   Flask caches templates when not in debug: restart `skibot dashboard` after
   template edits. The Windows scheduled task (scripts/collect.bat) chains
   collect + features hourly.

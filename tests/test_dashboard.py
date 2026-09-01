@@ -69,3 +69,16 @@ def test_summary_counts(app):
     assert s["games_total"] == 1
     assert s["prospective"] == 1  # M1 n'est dans aucun split
     conn.close()
+
+
+def test_audits_page(app):
+    r = app.test_client().get("/audits")
+    assert r.status_code == 200
+    assert "Verdicts" in r.get_data(as_text=True)
+
+
+def test_analyse_page_without_report(app, tmp_path):
+    app.config["REPORTS_DIR"] = tmp_path  # vide : pas d'analyse
+    r = app.test_client().get("/analyse")
+    assert r.status_code == 200
+    assert "Aucune analyse disponible" in r.get_data(as_text=True)

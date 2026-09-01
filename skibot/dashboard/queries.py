@@ -223,3 +223,51 @@ def hypothesis_tags(conn: sqlite3.Connection, last_n: int = 20) -> dict:
             counts[t] = counts.get(t, 0) + 1
     ordered = sorted(counts.items(), key=lambda kv: -kv[1])
     return {"n_verdicts": len(rows), "tags": [{"tag": t, "count": c} for t, c in ordered]}
+
+
+def all_audits(conn: sqlite3.Connection, limit: int = 100) -> list[dict]:
+    rows = conn.execute(
+        """SELECT a.verdict_json, a.model, a.cost_usd, m.game_start, m.game_duration_s,
+                  f.my_champion, f.enemy_jungler_champion, f.y_win
+           FROM audits a JOIN matches m USING (match_id) JOIN features f USING (match_id)
+           ORDER BY m.game_start DESC LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    return [
+        {
+            "date": datetime.fromtimestamp(r["game_start"] / 1000, tz=UTC)
+            .astimezone().strftime("%d/%m/%Y %H:%M"),
+            "duration": f"{r['game_duration_s'] // 60} min",
+            "win": bool(r["y_win"]),
+            "champ": r["my_champion"],
+            "vs": r["enemy_jungler_champion"] or "?",
+            "verdict": json.loads(r["verdict_json"]),
+            "model": r["model"],
+            "cost": r["cost_usd"],
+        }
+        for r in rows
+    ]
+
+
+def latest_analysis(reports_dir) -> dict | None:
+    """Dernier screening exporté par `skibot analyze` (analyse_latest.json)."""
+    from pathlib import Path
+
+    path = Path(reports_dir) / "analyse_latest.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    results = data.get("results", [])
+    confirmed = [r for r in results if r.get("verdict") == "confirmé"]
+    confirmed.sort(key=lambda r: (r["tag"] != "levier", r["q"]))
+    failed = [r for r in results if r.get("retained") and r.get("verdict") != "confirmé"]
+    return {
+        "generated": data.get("generated", "?")[:10],
+        "meta": data.get("meta", {}),
+        "confirmed": confirmed,
+        "failed": failed,
+        "n_tested": len(results),
+    }

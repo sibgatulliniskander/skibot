@@ -39,6 +39,7 @@ def create_app(db_path: Path | None = None) -> Flask:
     if db_path is None:
         db_path = load_config(require_key=False).db_path
     app.config["DB_PATH"] = Path(db_path)
+    app.config.setdefault("REPORTS_DIR", PROJECT_ROOT / "reports")
 
     @app.route("/")
     def index():
@@ -67,6 +68,31 @@ def create_app(db_path: Path | None = None) -> Flask:
                 audits=queries.latest_audits(conn),
                 hypotheses=queries.hypothesis_tags(conn),
                 consigne=consigne_status(),
+            )
+        finally:
+            conn.close()
+
+    @app.route("/audits")
+    def audits():
+        conn = _connect(app.config["DB_PATH"])
+        try:
+            return render_template(
+                "audits.html",
+                summary=queries.summary(conn),
+                audits=queries.all_audits(conn),
+                hypotheses=queries.hypothesis_tags(conn),
+            )
+        finally:
+            conn.close()
+
+    @app.route("/analyse")
+    def analyse():
+        conn = _connect(app.config["DB_PATH"])
+        try:
+            return render_template(
+                "analyse.html",
+                summary=queries.summary(conn),
+                analysis=queries.latest_analysis(app.config["REPORTS_DIR"]),
             )
         finally:
             conn.close()
