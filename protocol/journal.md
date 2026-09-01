@@ -20,3 +20,9 @@ Platine : ses games sont exclues des analyses de décision (règle n°11 étendu
 aux comptes) jusqu'à ce que son rang rejoigne l'ère courante. Benchmark Diamant
 en production (894 junglers, 18 métriques) : écart n°1 = pings on-my-way (5 vs
 15) ; morts post-25 confirmées par la 3e source (76e percentile chez eux).
+
+## 2026-09-01 (suite)
+Champion pool gravé (protocol/pool.md) : Viego titulaire + Kha'Zix en backup en
+ranked, slot AP carry vacant — Ekko et Karthus en test sur le labo-smurf,
+décision ~21/09. Fin de la roulette (18 champions en carrière). Meta Diamant du
+benchmark utilisée comme meta révélée (Nasus/Amumu absents des picks Diamant).

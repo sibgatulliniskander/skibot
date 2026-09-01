@@ -11,6 +11,7 @@ documentée en stream. Point de départ mesuré le 2026-08-31 : **Platine III, 4
 | [02-boucle-macro.md](02-boucle-macro.md) | Revue hebdomadaire et gestion de LA consigne active |
 | [03-revues-trimestrielles.md](03-revues-trimestrielles.md) | Bilan trimestriel, trajectoire elo, évolutions du protocole |
 | [consigne-active.md](consigne-active.md) | La consigne en cours : hypothèse, métrique, critère, verdict |
+| [pool.md](pool.md) | Le champion pool gravé (ranked + labo-smurf) et ses justifications |
 
 Jalons elo indicatifs (révisables en revue trimestrielle, jamais en cours de trimestre) :
 Émeraude fin 2026 → Diamant mi-2027 → **Master fin 2027**.
