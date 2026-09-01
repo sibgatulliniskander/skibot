@@ -31,6 +31,14 @@ COMPARE_METRICS = [
 ]
 MIN_N = 30
 
+# Métriques RELATIVES à l'adversaire direct : chez les Diamant (miroir Diamant
+# vs Diamant), leur médiane vaut ~0 par construction. Ma valeur y mesure ma
+# domination de MON elo, pas un écart vis-à-vis d'eux.
+RELATIVE_METRICS = {
+    "gold_diff_ejgl_10", "gold_diff_ejgl_15", "xp_diff_ejgl_10",
+    "cs_diff_ejgl_10", "counter_jungle_diff", "vision_advantage_vs_ejgl",
+}
+
 
 def compare(conn: sqlite3.Connection, *, era_start: str = ERA_START) -> dict:
     era_ms = int(pd.Timestamp(era_start).value // 1_000_000)
@@ -66,6 +74,7 @@ def compare(conn: sqlite3.Connection, *, era_start: str = ERA_START) -> dict:
             "gap": round(abs(pct - 50), 1),  # distance à la médiane Diamant
             "n_me": len(mine),
             "n_bench": len(theirs),
+            "relative": metric in RELATIVE_METRICS,
         })
     results.sort(key=lambda r: -r["gap"])
     return {

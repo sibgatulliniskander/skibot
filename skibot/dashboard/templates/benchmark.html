@@ -31,7 +31,13 @@
       </p>
       <div class="badges">
         <span class="badge {{ 'bad' if m.gap >= 30 else 'warn' }}">écart marqué</span>
+        {% if m.relative %}<span class="badge neutral">vs son propre adversaire</span>{% endif %}
       </div>
+      {% if m.relative %}
+      <p class="note">Métrique relative à l'adversaire direct : leur médiane vaut ~0 par
+        construction (Diamant contre Diamant). Ma valeur mesure ma domination de MON elo,
+        pas un écart vis-à-vis d'eux.</p>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
@@ -46,7 +52,7 @@
     <tr><th>Métrique</th><th>Moi</th><th>Eux (médiane)</th><th>Ma position chez eux</th></tr>
     {% for m in bench.in_norm %}
     <tr>
-      <td>{{ m.label }}</td>
+      <td>{{ m.label }}{% if m.relative %} <span class="fact-ids">(relatif à son propre adversaire)</span>{% endif %}</td>
       <td>{{ m.me_h }}</td>
       <td>{{ m.them_h }}</td>
       <td class="fact-ids">{{ m.my_percentile_in_bench | round | int }}e percentile</td>
