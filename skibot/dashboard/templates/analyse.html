@@ -22,6 +22,7 @@
     <div class="effect">
       <h3>{{ r.label }}</h3>
       <p class="compare">{{ r.human or r.effect_label }}</p>
+      {% if r.desc %}<p class="note">{{ r.desc }}</p>{% endif %}
       <div class="badges">
         <span class="badge levier">actionnable</span>
         <span class="badge neutral">{{ r.strength }}</span>
@@ -38,9 +39,13 @@
     {% endfor %}
   </div>
   <p class="audit-lim" style="margin-top: 14px">
-    « Actionnable » = un comportement que je peux décider de changer. Attention : lien prouvé
-    ne veut pas dire cause prouvée — c'est la consigne testée sur les games futures qui tranchera.
-    Un levier qui « s'affaiblit » ou n'est « plus d'actualité » ne peut pas devenir une consigne.
+    « Actionnable » = un comportement que je peux décider de changer. Deux honnêtetés
+    obligatoires. 1) Lien prouvé ≠ cause prouvée : le ping n'est peut-être que la partie visible
+    d'une façon de jouer, voire une conséquence d'une game qui se passe bien — c'est la consigne
+    testée sur les games futures qui tranchera. 2) Aucun de ces écarts ne « fait basculer » une
+    game : personne ne gagne grâce à un ping de plus. Le but est de déplacer le win rate de
+    quelques points — invisible sur une game, mais 50 % → 52-53 % sur 400 games ≈ un tier
+    entier de gagné. On n'optimise pas une game, on décale une distribution.
   </p>
 </div>
 
@@ -51,6 +56,7 @@
     <div class="effect">
       <h3>{{ r.label }}</h3>
       <p class="compare">{{ r.human or r.effect_label }}</p>
+      {% if r.desc %}<p class="note">{{ r.desc }}</p>{% endif %}
       <div class="badges">
         <span class="badge meca">constat</span>
         <span class="badge neutral">{{ r.strength }}</span>

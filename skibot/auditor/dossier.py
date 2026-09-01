@@ -204,17 +204,17 @@ def build(
     if has("herald_team"):
         add(f"Hérauts pris par mon équipe : {f['herald_team']}", P_EVENT)
     if has("plates_diff"):
-        add(f"Différentiel de plates de tourelle : {f['plates_diff']:+d}{ref('plates_diff')}", P_EVENT)
+        add(f"Plates — avance de mon équipe sur l'adversaire : {f['plates_diff']:+d}{ref('plates_diff')}", P_EVENT)
     if has("dragons_diff"):
-        add(f"Différentiel de dragons : {f['dragons_diff']:+d}{ref('dragons_diff')}", P_EVENT)
+        add(f"Dragons — avance de mon équipe : {f['dragons_diff']:+d}{ref('dragons_diff')}", P_EVENT)
     if has("soul_team"):
         add(f"Âme draconique : {'mon équipe' if f['soul_team'] else 'équipe adverse'}", P_EVENT)
     if has("barons_diff"):
-        add(f"Différentiel de Barons : {f['barons_diff']:+d}{ref('barons_diff')}", P_EVENT)
+        add(f"Barons — avance de mon équipe : {f['barons_diff']:+d}{ref('barons_diff')}", P_EVENT)
     if has("atakhan_team"):
         add(f"Atakhan : {'mon équipe' if f['atakhan_team'] else 'équipe adverse'}", P_EVENT)
     if has("towers_diff"):
-        add(f"Différentiel de tours : {f['towers_diff']:+d}{ref('towers_diff')}", P_EVENT)
+        add(f"Tours — avance de mon équipe : {f['towers_diff']:+d}{ref('towers_diff')}", P_EVENT)
     if has("epic_monster_steals"):
         add(f"Vols de monstres épiques par moi : {f['epic_monster_steals']}", P_CHAL)
     if has("y2_team_gold_diff_15"):

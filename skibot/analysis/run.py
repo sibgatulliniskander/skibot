@@ -17,7 +17,7 @@ import pandas as pd
 
 from ..config import PROJECT_ROOT
 from . import report, split, stats
-from .stats import FR_LABELS
+from .stats import FR_DESC, FR_LABELS
 
 FDR_Q = 0.10
 ALPHA_CONFIRM = 0.05
@@ -198,6 +198,7 @@ def _write_latest_json(out_dir: Path, results: list[dict], meta: dict) -> None:
             "tag": r["tag"], "n": r["n"], "p": r["p"], "q": r["q"],
             "retained": r["retained"], "effect_label": r["effect_label"],
             "label": FR_LABELS.get(r["feature"], r["feature"]),
+            "desc": FR_DESC.get(r["feature"]),
             "human": _human(r),
             "strength": _strength(r),
             "verdict": r.get("verdict"),
