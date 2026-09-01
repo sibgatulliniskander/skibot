@@ -13,6 +13,8 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
+from ..config import account_filter
+
 P_EVENT = "prouvé — events timeline"
 P_FRAME = "prouvé — frames timeline"
 P_CHAL = "prouvé — challenges Riot"
@@ -39,10 +41,11 @@ MIN_BASELINE_N = 30
 
 def compute_baselines(conn: sqlite3.Connection) -> dict:
     """Médianes perso (W/L) et distribution par métrique, historique hors remakes."""
+    cond, params = account_filter("account")
     df = pd.read_sql_query(
         "SELECT y_win, " + ", ".join(BASELINE_METRICS)
-        + " FROM features WHERE is_remake = 0",
-        conn,
+        + f" FROM features WHERE is_remake = 0 AND {cond}",
+        conn, params=params,
     )
     out: dict[str, dict] = {}
     for metric in BASELINE_METRICS:

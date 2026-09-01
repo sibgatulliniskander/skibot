@@ -91,3 +91,22 @@ def update_env_value(name: str, value: str, env_path: Path | None = None) -> Pat
         lines.append(f"{name}={value}")
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return env_path
+
+
+def analysis_accounts() -> tuple[str, ...]:
+    """Comptes (riot_id) éligibles aux analyses de décision (règle n°11).
+
+    RIOT_ANALYSIS_ACCOUNTS dans .env, séparés par ; — vide = aucun filtre.
+    Un smurf n'y entre que lorsque son rang rejoint l'ère courante.
+    """
+    raw = os.environ.get("RIOT_ANALYSIS_ACCOUNTS", "")
+    return tuple(p.strip() for p in raw.split(";") if p.strip())
+
+
+def account_filter(column: str = "account") -> tuple[str, tuple]:
+    """Condition SQL d'éligibilité. NULL (lignes de test/pré-migration) passe."""
+    accounts = analysis_accounts()
+    if not accounts:
+        return "1=1", ()
+    placeholders = ", ".join("?" for _ in accounts)
+    return f"({column} IS NULL OR {column} IN ({placeholders}))", accounts

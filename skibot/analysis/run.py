@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..config import PROJECT_ROOT
+from ..config import PROJECT_ROOT, account_filter
 from . import report, split, stats
 from .stats import FR_DESC, FR_LABELS
 
@@ -42,12 +42,13 @@ def _hour_bin(h) -> str | None:
 
 
 def load_dataset(conn: sqlite3.Connection) -> pd.DataFrame:
+    cond, params = account_filter("f.account")
     df = pd.read_sql_query(
-        """SELECT f.*, s.split, m.game_start FROM features f
+        f"""SELECT f.*, s.split, m.game_start FROM features f
            JOIN analysis_split s USING (match_id)
            JOIN matches m USING (match_id)
-           WHERE f.is_remake = 0""",
-        conn,
+           WHERE f.is_remake = 0 AND {cond}""",
+        conn, params=params,
     )
     df["hour_bin"] = df["hour_of_day"].map(_hour_bin)
     df["day_of_week"] = df["day_of_week"].map(
@@ -72,10 +73,12 @@ def analyze(
     df = load_dataset(conn)
     explore = df[df["split"] == "explore"]
     confirm = df[df["split"] == "confirm"]
+    cond, params = account_filter("f.account")
     n_prospective = conn.execute(
-        """SELECT COUNT(*) c FROM features f
+        f"""SELECT COUNT(*) c FROM features f
            LEFT JOIN analysis_split s USING (match_id)
-           WHERE f.is_remake = 0 AND s.match_id IS NULL"""
+           WHERE f.is_remake = 0 AND s.match_id IS NULL AND {cond}""",
+        params,
     ).fetchone()["c"]
 
     specs = {s.name: s for s in stats.FEATURES}

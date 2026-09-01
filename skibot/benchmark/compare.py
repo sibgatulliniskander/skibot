@@ -17,7 +17,7 @@ import pandas as pd
 
 from ..analysis.run import ERA_START
 from ..analysis.stats import FR_LABELS
-from ..config import PROJECT_ROOT
+from ..config import PROJECT_ROOT, account_filter
 
 # Métriques à source strictement identique (challenges / DTO) côté moi et côté bench
 COMPARE_METRICS = [
@@ -42,10 +42,11 @@ RELATIVE_METRICS = {
 
 def compare(conn: sqlite3.Connection, *, era_start: str = ERA_START) -> dict:
     era_ms = int(pd.Timestamp(era_start).value // 1_000_000)
+    cond, params = account_filter("f.account")
     me = pd.read_sql_query(
         "SELECT f.* FROM features f JOIN matches m USING (match_id) "
-        "WHERE f.is_remake = 0 AND m.game_start >= ?",
-        conn, params=(era_ms,),
+        f"WHERE f.is_remake = 0 AND m.game_start >= ? AND {cond}",
+        conn, params=(era_ms, *params),
     )
     bench = pd.read_sql_query("SELECT * FROM bench_games", conn)
     if bench.empty:

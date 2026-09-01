@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 import pandas as pd
 
 from ..analysis.run import ERA_START
+from ..config import account_filter
 
 TIERS = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"]
 TIERS_FR = {
@@ -69,11 +70,12 @@ def summary(conn: sqlite3.Connection) -> dict:
         f"SELECT * FROM rank_snapshots WHERE {cond} ORDER BY snapshot_id DESC LIMIT 1",
         params,
     ).fetchone()
+    cond, cparams = account_filter("f.account")
     era = conn.execute(
-        """SELECT COUNT(*) n, COALESCE(SUM(y_win), 0) w FROM features f
+        f"""SELECT COUNT(*) n, COALESCE(SUM(y_win), 0) w FROM features f
            JOIN matches m USING (match_id)
-           WHERE f.is_remake = 0 AND m.game_start >= ?""",
-        (_era_ms(),),
+           WHERE f.is_remake = 0 AND m.game_start >= ? AND {cond}""",
+        (_era_ms(), *cparams),
     ).fetchone()
     prospective = conn.execute(
         """SELECT COUNT(*) c FROM features f
@@ -140,10 +142,11 @@ def lp_history(conn: sqlite3.Connection) -> list[dict]:
 
 
 def weekly_wr(conn: sqlite3.Connection, weeks: int = 16) -> list[dict]:
+    cond, cparams = account_filter("f.account")
     df = pd.read_sql_query(
-        """SELECT m.game_start, f.y_win FROM features f
-           JOIN matches m USING (match_id) WHERE f.is_remake = 0""",
-        conn,
+        f"""SELECT m.game_start, f.y_win FROM features f
+           JOIN matches m USING (match_id) WHERE f.is_remake = 0 AND {cond}""",
+        conn, params=cparams,
     )
     if df.empty:
         return []
@@ -161,11 +164,12 @@ def weekly_wr(conn: sqlite3.Connection, weeks: int = 16) -> list[dict]:
 
 def levier_trends(conn: sqlite3.Connection, window: int = 15, games: int = 150) -> dict:
     """Médianes glissantes des leviers candidats (suivi interne, pas un verdict)."""
+    cond, cparams = account_filter("f.account")
     df = pd.read_sql_query(
-        """SELECT m.game_start, f.on_my_way_pings, f.vision_advantage_vs_ejgl
+        f"""SELECT m.game_start, f.on_my_way_pings, f.vision_advantage_vs_ejgl
            FROM features f JOIN matches m USING (match_id)
-           WHERE f.is_remake = 0 ORDER BY m.game_start""",
-        conn,
+           WHERE f.is_remake = 0 AND {cond} ORDER BY m.game_start""",
+        conn, params=cparams,
     ).tail(games)
     if df.empty:
         return {"labels": [], "omw": [], "vision": []}
@@ -333,6 +337,8 @@ def map_points(conn: sqlite3.Connection) -> dict:
     Positions prouvées par les events CHAMPION_KILL de la timeline —
     contrairement aux wards, jamais cartographiées (non mesurables).
     """
+    acond, aparams = account_filter("f.account")
+
     def q(role: str) -> list[list]:
         rows = conn.execute(
             f"""SELECT e.pos_x, e.pos_y, e.timestamp_ms / 60000 AS minute, f.y_win
@@ -342,8 +348,8 @@ def map_points(conn: sqlite3.Connection) -> dict:
                 JOIN matches m ON m.match_id = e.match_id
                 WHERE e.type = 'CHAMPION_KILL' AND e.{role} = p.participant_id
                   AND e.pos_x IS NOT NULL AND f.is_remake = 0
-                  AND m.game_start >= ?""",
-            (_era_ms(),),
+                  AND m.game_start >= ? AND {acond}""",
+            (_era_ms(), *aparams),
         ).fetchall()
         return [[r["pos_x"], r["pos_y"], int(r["minute"]), r["y_win"]] for r in rows]
 

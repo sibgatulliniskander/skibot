@@ -12,9 +12,9 @@ def make_match():
             "queueId": 420,
             "platformId": "EUW1",
             "gameVersion": "15.17.700.1234",
-            "gameCreation": 1_000_000,
-            "gameStartTimestamp": 1_000_500,
-            "gameEndTimestamp": 2_000_500,
+            "gameCreation": 1_756_000_000_000,
+            "gameStartTimestamp": 1_756_000_000_500,
+            "gameEndTimestamp": 1_756_001_000_500,
             "gameDuration": 1000,
             "participants": [
                 {
@@ -87,6 +87,11 @@ def test_ingest_full(conn):
     assert me["champion_name"] == "LeeSin"
     assert me["cs_total"] == 180
     assert me["riot_id"] == "Me#EUW"
+
+    from skibot.features import extract as fx
+    fx.run(conn, meta_provider=lambda p: None, log=lambda m: None)
+    acc = conn.execute("SELECT account FROM features WHERE match_id = 'EUW1_1'").fetchone()
+    assert acc["account"] == "Me#EUW"  # le compte est tracé pour la règle n°11
 
     ward = conn.execute("SELECT * FROM timeline_events WHERE type = 'WARD_PLACED'").fetchone()
     assert ward["participant_id"] == 1  # creatorId promu en participant_id

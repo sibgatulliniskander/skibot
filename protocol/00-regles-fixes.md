@@ -46,6 +46,10 @@ Ces règles ne changent jamais, quel que soit le résultat du moment.
     levier dont l'effet est instable ou affaibli dans l'ère courante n'est pas
     éligible comme consigne. [Décision du 2026-08-31 — le rang par game n'étant
     pas fourni par Riot, l'ère est un proxy temporel : inféré, pas prouvé.]
+    Multi-comptes (2026-09-01) : les games d'un compte secondaire ne sont
+    éligibles aux analyses de décision que lorsque son rang rejoint celui de
+    l'ère courante (liste RIOT_ANALYSIS_ACCOUNTS dans .env) ; elles restent
+    collectées, auditées et visibles dans les vues opérationnelles.
 
 ## Conduite de l'expérimentation
 

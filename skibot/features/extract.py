@@ -13,12 +13,12 @@ from datetime import UTC, datetime
 
 from . import ddragon
 
-EXTRACTOR_VERSION = 1
+EXTRACTOR_VERSION = 2
 FAMILIARITY_WINDOW_DAYS = 30
 MS = 60_000  # une minute en ms
 
 COLUMNS = [
-    "match_id", "computed_at", "extractor_version",
+    "match_id", "computed_at", "extractor_version", "account",
     "y_win", "y2_team_gold_diff_15", "is_remake", "ended_in_surrender",
     "session_game_index", "games_played_today", "minutes_since_prev_game",
     "prev_game_result", "current_streak", "hour_of_day", "day_of_week",
@@ -181,6 +181,7 @@ def _extract_one(
         "computed_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "extractor_version": EXTRACTOR_VERSION,
         "y_win": me["win"],
+        "account": me["riot_id"],
         "is_remake": 1 if raw_me.get("gameEndedInEarlySurrender") else 0,
         "ended_in_surrender": 1 if raw_me.get("gameEndedInSurrender") else 0,
         **ctx,
