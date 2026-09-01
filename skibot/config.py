@@ -35,6 +35,8 @@ class Config:
     db_path: Path
     queue_id: int = QUEUE_SOLO_DUO
     session_gap_minutes: int = SESSION_GAP_MINUTES
+    # (game_name, tag_line) : le principal d'abord (courbe LP publique), puis les alts
+    accounts: tuple = ()
 
     @property
     def regional(self) -> str:
@@ -61,7 +63,16 @@ def load_config(require_key: bool = True) -> Config:
     if platform not in REGIONAL_ROUTING:
         raise ConfigError(f"RIOT_PLATFORM inconnue : {platform!r} (ex : euw1)")
     db_path = Path(os.environ.get("SKIBOT_DB", str(PROJECT_ROOT / "data" / "skibot.db")))
-    return Config(key, game_name, tag_line, platform, db_path)
+    accounts = []
+    if game_name and tag_line:
+        accounts.append((game_name, tag_line))
+    for part in os.environ.get("RIOT_ALT_ACCOUNTS", "").split(";"):
+        part = part.strip()
+        if "#" in part:
+            n, t = part.split("#", 1)
+            if n.strip() and t.strip():
+                accounts.append((n.strip(), t.strip()))
+    return Config(key, game_name, tag_line, platform, db_path, accounts=tuple(accounts))
 
 
 def update_env_value(name: str, value: str, env_path: Path | None = None) -> Path:

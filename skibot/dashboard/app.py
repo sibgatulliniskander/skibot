@@ -37,7 +37,10 @@ def consigne_status() -> str:
 def create_app(db_path: Path | None = None) -> Flask:
     app = Flask(__name__)
     if db_path is None:
-        db_path = load_config(require_key=False).db_path
+        cfg = load_config(require_key=False)
+        db_path = cfg.db_path
+        if cfg.game_name:
+            queries.set_official(f"{cfg.game_name}#{cfg.tag_line}")
     app.config["DB_PATH"] = Path(db_path)
     app.config.setdefault("REPORTS_DIR", PROJECT_ROOT / "reports")
 

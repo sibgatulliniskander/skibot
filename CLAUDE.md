@@ -58,6 +58,10 @@ Key design decisions:
 - **Sessions are recomputed deterministically** from 60-min gaps between games
   (`collector/sessions.py`); manual `note`s are preserved by `started_at` across
   rebuilds. Only ranked solo/duo (queue 420) is collected.
+- **Multi-account**: RIOT_ALT_ACCOUNTS in .env ("Name#Tag;Name#Tag") merges
+  smurf games into the SAME db (same player = same process; per-account
+  incremental start_time). rank_snapshots.riot_id tags each snapshot; the
+  public LP curve filters to the main account (queries.set_official).
 - **`rank_snapshots` appends the current rank on every collect** — it is the only
   possible source of LP history (the League API has no historical endpoint).
 - **Migrations**: numbered SQL files in `migrations/`, applied in filename order,

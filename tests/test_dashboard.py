@@ -131,3 +131,25 @@ def test_carte_page_and_points(app):
     r = app.test_client().get("/carte")
     assert r.status_code == 200
     assert "map11.png" in r.get_data(as_text=True)
+
+
+def test_lp_curve_filters_official_account(app):
+    conn = sqlite3.connect(app.config["DB_PATH"])
+    conn.row_factory = sqlite3.Row
+    conn.execute(
+        "INSERT INTO rank_snapshots (taken_at, queue_type, tier, division, lp, wins,"
+        " losses, riot_id) VALUES ('2026-09-01T11:00:00+00:00', 'RANKED_SOLO_5x5',"
+        " 'PLATINUM', 'II', 10, 5, 5, 'Smurf#EUW')"
+    )
+    conn.commit()
+    from skibot.dashboard import queries
+    try:
+        queries.set_official("Main#EUW")
+        # legacy (riot_id NULL) visible, smurf exclu de la courbe publique
+        hist = queries.lp_history(conn)
+        assert len(hist) == 1
+        s = queries.summary(conn)
+        assert "Platine III" in s["rank"]  # le snapshot legacy du main, pas le smurf
+    finally:
+        queries.set_official(None)
+    conn.close()

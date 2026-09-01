@@ -22,6 +22,19 @@ TIERS_FR = {
 }
 DIVISIONS = {"IV": 0, "III": 1, "II": 2, "I": 3}
 NEXT_REVIEW = "2026-12-01"
+OFFICIAL_ID: str | None = None  # riot_id du compte principal (fixé par l'app)
+
+
+def set_official(riot_id: str | None) -> None:
+    """Compte dont le rang/LP est affiché publiquement (NULL en base = lui aussi)."""
+    global OFFICIAL_ID
+    OFFICIAL_ID = riot_id
+
+
+def _rank_filter() -> tuple[str, tuple]:
+    if OFFICIAL_ID:
+        return "(riot_id IS NULL OR riot_id = ?)", (OFFICIAL_ID,)
+    return "riot_id IS NULL", ()
 TARGET = "MASTER (fin 2027)"
 MONTHS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
              "août", "septembre", "octobre", "novembre", "décembre"]
@@ -51,8 +64,10 @@ def _era_ms() -> int:
 
 
 def summary(conn: sqlite3.Connection) -> dict:
+    cond, params = _rank_filter()
     rank = conn.execute(
-        "SELECT * FROM rank_snapshots ORDER BY snapshot_id DESC LIMIT 1"
+        f"SELECT * FROM rank_snapshots WHERE {cond} ORDER BY snapshot_id DESC LIMIT 1",
+        params,
     ).fetchone()
     era = conn.execute(
         """SELECT COUNT(*) n, COALESCE(SUM(y_win), 0) w FROM features f
@@ -104,8 +119,11 @@ def summary(conn: sqlite3.Connection) -> dict:
 
 def lp_history(conn: sqlite3.Connection) -> list[dict]:
     """Un point par snapshot (dédoublonné par heure) : la courbe publique."""
+    cond, params = _rank_filter()
     rows = conn.execute(
-        "SELECT taken_at, tier, division, lp FROM rank_snapshots ORDER BY snapshot_id"
+        f"SELECT taken_at, tier, division, lp FROM rank_snapshots WHERE {cond} "
+        "ORDER BY snapshot_id",
+        params,
     ).fetchall()
     out, seen = [], set()
     for r in rows:

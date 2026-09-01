@@ -39,8 +39,9 @@ def collect(max_games: int | None) -> None:
     )
     if summary.get("skipped"):
         click.echo(f"{summary['skipped']} game(s) ignorée(s) : payload invalide côté Riot.")
-    if summary["rank"]:
-        click.echo(f"Rang actuel : {summary['rank']}")
+    for riot_id, rank in summary.get("ranks") or []:
+        if rank:
+            click.echo(f"Rang {riot_id} : {rank}")
 
 
 @main.command()
