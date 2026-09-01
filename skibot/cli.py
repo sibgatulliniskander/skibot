@@ -132,6 +132,54 @@ def set_anthropic_key():
     click.echo("Cle valide - l'auditor est pret (`skibot audit`).")
 
 
+@main.command("bench-collect")
+@click.option("--max-players", default=60, help="Joueurs Diamant echantillonnes.")
+@click.option("--games-per-player", default=5, help="Games recentes par joueur.")
+def bench_collect(max_players, games_per_player):
+    """Crawle un echantillon de junglers Diamant (benchmark, table bench_games)."""
+    try:
+        cfg = load_config()
+    except ConfigError as e:
+        raise click.ClickException(str(e))
+    conn = db.connect(cfg.db_path)
+    client = RiotClient(cfg.riot_api_key, cfg.platform, cfg.regional)
+    from .benchmark import collect as bench_mod
+    try:
+        s = bench_mod.collect(conn, client, max_players=max_players,
+                              games_per_player=games_per_player, log=click.echo)
+    except RiotAuthError as e:
+        raise click.ClickException(str(e))
+    except RiotApiError as e:
+        raise click.ClickException(f"Erreur API Riot : {e}")
+    click.echo("\n{} nouvelle(s) game(s), {} lignes jungler ajoutees ({} au total).".format(
+        s["new_games"], s["new_junglers"], s["total_junglers"]))
+
+
+@main.command()
+def bench():
+    """Compare mes distributions (ere courante) aux junglers Diamant crawles."""
+    cfg = load_config(require_key=False)
+    conn = db.connect(cfg.db_path)
+    from .benchmark import compare as compare_mod
+    result = compare_mod.compare(conn)
+    if not result["metrics"]:
+        raise click.ClickException(
+            "Pas assez de donnees de benchmark - lance d'abord `skibot bench-collect`."
+        )
+    path = compare_mod.write_latest(result)
+    click.echo("Moi ({} games depuis {}) vs junglers {} ({} lignes) :\n".format(
+        result["n_me"], result["era_start"], result["bench_tier"],
+        result["n_bench_junglers"]))
+    click.echo(f"{'Metrique':<44} {'Moi (med)':>10} {'Eux (med)':>10} {'Ma position':>12}")
+    for r in result["metrics"]:
+        click.echo("{:<44} {:>10g} {:>10g} {:>10.0f} %".format(
+            r["label"][:43], round(r["my_median"], 2), round(r["bench_median"], 2),
+            r["my_percentile_in_bench"]))
+    click.echo("\n'Ma position' = ou tombe ma mediane dans LEUR distribution "
+               "(50 % = identique a eux).")
+    click.echo(f"Export : {path}")
+
+
 @main.command("set-key")
 def set_key() -> None:
     """Enregistre ta clé Riot dans .env et vérifie qu'elle fonctionne."""

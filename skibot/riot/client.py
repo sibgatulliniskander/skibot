@@ -116,6 +116,15 @@ class RiotClient:
         )
         return self._get(url)
 
+    def league_entries_by_tier(
+        self, queue: str, tier: str, division: str, page: int = 1
+    ) -> list[dict]:
+        url = (
+            f"https://{self.platform}.api.riotgames.com"
+            f"/lol/league/v4/entries/{queue}/{tier}/{division}"
+        )
+        return self._get(url, {"page": page})
+
     def league_entries(self, puuid: str) -> list[dict]:
         url = f"https://{self.platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
         return self._get(url)

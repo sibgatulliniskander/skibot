@@ -24,6 +24,8 @@ python -m venv .venv                        # setup (Windows)
 .venv\Scripts\skibot dashboard              # Flask dashboard on http://127.0.0.1:5000
 .venv\Scripts\skibot set-anthropic-key      # store the Anthropic key in .env (validates it)
 .venv\Scripts\skibot audit                  # LLM post-game verdicts (default: 3 newest unaudited)
+.venv\Scripts\skibot bench-collect          # crawl a Diamond jungler sample (needs .env)
+.venv\Scripts\skibot bench                  # compare my current-era distributions vs Diamond
 .venv\Scripts\skibot status                 # DB state, no API key needed
 ```
 
@@ -71,6 +73,13 @@ Key design decisions:
   template edits. The Windows scheduled task (scripts/collect.bat) chains
   collect + features hourly.
 
+- Benchmark (skibot/benchmark/): crawls Diamond I-II jungler games (match DTO
+  only, no timelines — 1 request/game, 2 junglers/game) into `bench_games`,
+  never mixed with the player's data. `skibot bench` compares current-era
+  distributions on the 12 metrics whose Riot counters are identical on both
+  sides (COMPARE_METRICS), writes reports/benchmark_latest.json. Percentiles
+  use midpoint tie-ranking. A gap vs Diamond is a hypothesis generator, never
+  causal proof. Foundation for the future build advisor (items stored).
 - Auditor (skibot/auditor/): the LLM (claude-opus-5) only ever sees a
   deterministic "dossier de faits" (numbered facts, each with provenance) built
   in auditor/dossier.py; verify_citations() mechanically rejects any verdict

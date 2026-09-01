@@ -26,6 +26,8 @@ skibot features  # extrait ~60 variables d'analyse par game (table features)
 skibot analyze   # screening + confirmation, rapport markdown dans reports/
 skibot dashboard # dashboard Flask : vue publique / et vue interne /interne
 skibot audit     # verdicts LLM post-game (nécessite ANTHROPIC_API_KEY dans .env)
+skibot bench-collect  # crawle un échantillon de junglers Diamant (benchmark)
+skibot bench     # mes distributions vs les leurs (générateur d'hypothèses)
 skibot status    # état de la base (games, sessions, dernier rang connu)
 ```
 
