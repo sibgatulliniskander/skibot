@@ -181,7 +181,7 @@ def test_dossier_baselines_and_consigne(conn):
                 "operator": ">=", "target": 8}
     d = dossier.build(conn, "EUW1_B0", baselines=baselines, consigne=consigne)
     text = dossier.render(d)
-    assert "repère perso" in text
-    assert "percentile" in text
+    assert "d'habitude" in text
+    assert "de tes games" in text
     assert "CONSIGNE ACTIVE n°1" in text
     assert "objectif >= 8" in text

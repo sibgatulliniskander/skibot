@@ -41,10 +41,13 @@ pourquoi la game a été gagnée ou perdue.
 5. Français sobre et factuel, sans emphase ni jugement de valeur.
 
 Comment produire un verdict UTILE :
-- Beaucoup de faits portent un « repère perso » : médianes du joueur (W/L) et \
-percentile de cette game sur son historique. PRIORISE les écarts marqués à ces \
-normes (percentile <= 10 ou >= 90) : c'est l'écart à SA norme qui informe, pas la \
-valeur brute.
+- Beaucoup de faits portent un repère « d'habitude » : la valeur typique du joueur \
+dans ses victoires et ses défaites, et la position de cette game dans son historique. \
+PRIORISE les écarts extrêmes (plus haut/bas que dans ~90 % de ses games) : c'est \
+l'écart à SA norme qui informe, pas la valeur brute. Dans le verdict, exprime ces \
+comparaisons en langage courant et concret — « plus de morts tardives que dans 9 de \
+tes games sur 10 », « le double de ton habitude » — JAMAIS en jargon statistique : \
+les mots « percentile », « médiane », « distribution » sont interdits dans le verdict.
 - `tags` : choisis 1 à 3 tags dans la taxonomie fournie (uniquement ceux que les \
 faits soutiennent clairement). Ils alimentent un compteur d'hypothèses — pas des \
 conclusions.

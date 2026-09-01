@@ -86,9 +86,13 @@ def build(
             med_w, med_l = f"{b['med_w']:.0%}", f"{b['med_l']:.0%}"
         else:
             med_w, med_l = f"{b['med_w']:g}", f"{b['med_l']:g}"
+        if pct >= 50:
+            position = f"plus haut que dans {pct:.0f} % de tes games"
+        else:
+            position = f"plus bas que dans {100 - pct:.0f} % de tes games"
         return (
-            f" · repère perso : méd. W {med_w} / L {med_l}, "
-            f"cette game au percentile {pct:.0f}"
+            f" · d'habitude : {med_w} quand tu gagnes, {med_l} quand tu perds — "
+            f"cette game : {position}"
         )
 
     def add(text: str, prov: str) -> None:
@@ -269,8 +273,8 @@ def render(d: dict) -> str:
             f"{h['result']} en {h['duration_min']} min (patch {h['patch']})"
         ),
         "",
-        "DOSSIER DE FAITS (seule source autorisée). Les « repères perso » sont les",
-        "médianes W/L et percentiles du joueur sur son historique complet hors remakes",
+        "DOSSIER DE FAITS (seule source autorisée). Les repères « d'habitude »",
+        "comparent cette game à l'historique complet du joueur, hors remakes",
         "[prouvé — base locale] :",
     ]
     lines.extend(f"{f['id']}. {f['text']} [{f['prov']}]" for f in d["facts"])
