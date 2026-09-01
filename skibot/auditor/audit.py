@@ -8,6 +8,7 @@ regénérer. Deux échecs = AuditError, jamais de verdict non conforme en base.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -37,6 +38,16 @@ def verify_citations(verdict: dict, valid_ids: set[str]) -> list[str]:
         if not ids:
             problems.append(f"affirmation sans citation : « {c.get('texte', '')[:60]} »")
         problems.extend(f"citation inexistante : {i}" for i in ids if i not in valid_ids)
+    # les citations en texte libre (résumé, limites, textes) sont vérifiées aussi
+    free_text = " ".join(
+        [verdict.get("resume", ""), verdict.get("limites", "")]
+        + [c.get("texte", "") for c in claims]
+    )
+    problems.extend(
+        f"citation inexistante dans le texte : {i}"
+        for i in sorted(set(re.findall(r"F\d+", free_text)))
+        if i not in valid_ids
+    )
     return problems
 
 
@@ -136,6 +147,10 @@ def render_markdown(d: dict, verdict: dict) -> str:
         used.update(fm["fact_ids"])
     par = verdict["point_a_revoir"]
     used.update(par["fact_ids"])
+    # les faits cités en texte libre (ex. dans le résumé) figurent aussi en annexe
+    used.update(
+        i for i in re.findall(r"F\d+", verdict.get("resume", "")) if i in facts_by_id
+    )
     lines += [
         "",
         f"**À revoir** : {par['texte']} {cite(par['fact_ids'])}",

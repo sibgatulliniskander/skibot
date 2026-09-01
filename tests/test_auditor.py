@@ -139,3 +139,13 @@ def test_run_skips_already_audited(conn):
     assert s["audited"] == 1
     s2 = audit.run(conn, client=FakeClient([]), log=lambda m: None)
     assert s2["audited"] == 0
+
+
+def test_free_text_citations_are_verified():
+    valid = {"F1", "F2", "F3"}
+    v = make_verdict(["F1", "F2", "F3"])
+    v["resume"] = "Game marquée par un early déficitaire (F1, F42)."
+    problems = audit.verify_citations(v, valid)
+    assert any("F42" in p for p in problems)
+    v["resume"] = "Game marquée par un early déficitaire (F1, F2)."
+    assert audit.verify_citations(v, valid) == []
