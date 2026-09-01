@@ -139,9 +139,9 @@ def test_run_skips_already_audited(conn):
     d = dossier.build(conn, "EUW1_1")
     ids = [f["id"] for f in d["facts"]]
     client = FakeClient([json.dumps(make_verdict(ids[:3]))])
-    s = audit.run(conn, client=client, log=lambda m: None)
+    s = audit.run(conn, since_days=None, client=client, log=lambda m: None)
     assert s["audited"] == 1
-    s2 = audit.run(conn, client=FakeClient([]), log=lambda m: None)
+    s2 = audit.run(conn, since_days=None, client=FakeClient([]), log=lambda m: None)
     assert s2["audited"] == 0
 
 
@@ -185,3 +185,14 @@ def test_dossier_baselines_and_consigne(conn):
     assert "de tes games" in text
     assert "CONSIGNE ACTIVE n°1" in text
     assert "objectif >= 8" in text
+
+
+def test_run_window_excludes_old_games(conn):
+    insert_game(conn)  # T0 = août 2025, très vieux
+    s = audit.run(conn, since_days=7, client=FakeClient([]), log=lambda m: None)
+    assert s["audited"] == 0  # hors fenêtre
+    d = dossier.build(conn, "EUW1_1")
+    ids = [f["id"] for f in d["facts"]]
+    s = audit.run(conn, since_days=None, client=FakeClient([json.dumps(make_verdict(ids[:3]))]),
+                  log=lambda m: None)
+    assert s["audited"] == 1  # --all : fenêtre levée

@@ -211,20 +211,28 @@ def run(
     conn: sqlite3.Connection,
     *,
     limit: int = 3,
+    since_days: int | None = 7,
     client=None,
     model: str = MODEL,
     baselines: dict | None = None,
     consigne: dict | None = None,
     log: Callable[[str], None] = print,
 ) -> dict:
-    """Audite les games récentes sans verdict (hors remakes), de la plus récente."""
+    """Audite les games récentes sans verdict (hors remakes), de la plus récente.
+
+    since_days borne la fenêtre (7 jours par défaut) : sans elle, --limit
+    finirait par remonter tout l'historique, verdict par verdict payant.
+    """
+    min_start = 0
+    if since_days is not None:
+        min_start = int((datetime.now(UTC).timestamp() - since_days * 86_400) * 1000)
     todo = conn.execute(
         """SELECT f.match_id FROM features f
            JOIN matches m USING (match_id)
            LEFT JOIN audits a USING (match_id)
-           WHERE a.match_id IS NULL AND f.is_remake = 0
+           WHERE a.match_id IS NULL AND f.is_remake = 0 AND m.game_start >= ?
            ORDER BY m.game_start DESC LIMIT ?""",
-        (limit,),
+        (min_start, limit),
     ).fetchall()
     results = []
     baselines = dossier.compute_baselines(conn)

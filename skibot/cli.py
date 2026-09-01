@@ -89,8 +89,10 @@ def dashboard(port, host):
 
 @main.command()
 @click.option("--limit", default=3, help="Nombre maximum de games a auditer sur ce run.")
+@click.option("--since-days", default=7, help="Fenetre en jours (defaut 7).")
+@click.option("--all", "all_games", is_flag=True, help="Ignorer la fenetre (tout l'historique).")
 @click.option("--match", "match_id", default=None, help="Auditer une game precise (match_id).")
-def audit(limit, match_id):
+def audit(limit, since_days, all_games, match_id):
     """Genere les verdicts LLM post-game (dossier de faits + verification des citations)."""
     import os
     cfg = load_config(require_key=False)
@@ -107,7 +109,19 @@ def audit(limit, match_id):
             click.echo("\n" + res["markdown"])
             s = {"audited": 1, "cost_usd": res["cost_usd"]}
         else:
-            s = auditor_mod.run(conn, limit=limit, log=click.echo)
+            last = conn.execute("SELECT MAX(game_start) ts FROM matches").fetchone()["ts"]
+            if last:
+                dt = datetime.fromtimestamp(last / 1000, tz=UTC).astimezone()
+                click.echo(
+                    f"Derniere game en base : {dt:%d/%m %H:%M} - si ta toute derniere "
+                    "game manque, lance `skibot collect` d'abord.\n"
+                )
+            s = auditor_mod.run(conn, limit=limit,
+                                since_days=None if all_games else since_days,
+                                log=click.echo)
+            if s["audited"] == 0:
+                click.echo("Rien a auditer : toutes les games de la fenetre ont deja "
+                           "leur verdict (une game n'est jamais auditee deux fois).")
     except (auditor_mod.AuditError, ValueError) as e:
         raise click.ClickException(str(e))
     click.echo("\n{} game(s) auditee(s), cout total {:.3f} $.".format(s["audited"], s["cost_usd"]))
