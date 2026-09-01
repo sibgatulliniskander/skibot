@@ -86,3 +86,31 @@ def test_compare_positions_me_in_bench_distribution(conn):
     m = next(r for r in result["metrics"] if r["metric"] == "scuttle_crabs")
     assert m["my_median"] < m["bench_median"]
     assert m["my_percentile_in_bench"] < 50  # je suis sous leur mediane
+
+
+def test_timeline_metrics_for_both_junglers():
+    frames = []
+    for idx in range(16):
+        frames.append({
+            "timestamp": idx * 60_000,
+            "participantFrames": {
+                "1": {"totalGold": 1000 + idx * 400, "xp": idx * 500,
+                      "minionsKilled": 0, "jungleMinionsKilled": idx * 4},
+                "6": {"totalGold": 1000 + idx * 300, "xp": idx * 450,
+                      "minionsKilled": 0, "jungleMinionsKilled": idx * 3},
+            },
+            "events": [],
+        })
+    frames[15]["events"] = [
+        {"type": "CHAMPION_KILL", "timestamp": 7 * 60_000, "victimId": 1},
+        {"type": "CHAMPION_KILL", "timestamp": 27 * 60_000, "victimId": 1},
+        {"type": "CHAMPION_KILL", "timestamp": 28 * 60_000, "victimId": 6},
+    ]
+    m = bench.timeline_metrics({"info": {"frames": frames}}, [1, 6])
+    assert m[1]["deaths_pre15"] == 1
+    assert m[1]["deaths_post25"] == 1
+    assert m[6]["deaths_pre15"] == 0
+    assert m[6]["deaths_post25"] == 1
+    assert m[1]["gold_diff_ejgl_10"] == 1000
+    assert m[6]["gold_diff_ejgl_10"] == -1000
+    assert m[1]["cs_diff_ejgl_10"] == 10

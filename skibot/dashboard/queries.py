@@ -225,10 +225,22 @@ def hypothesis_tags(conn: sqlite3.Connection, last_n: int = 20) -> dict:
     return {"n_verdicts": len(rows), "tags": [{"tag": t, "count": c} for t, c in ordered]}
 
 
+def _match_deaths(conn: sqlite3.Connection, match_id: str) -> list[list]:
+    rows = conn.execute(
+        """SELECT e.pos_x, e.pos_y, e.timestamp_ms / 60000 AS minute
+           FROM timeline_events e
+           JOIN participants p ON p.match_id = e.match_id AND p.is_me = 1
+           WHERE e.match_id = ? AND e.type = 'CHAMPION_KILL'
+             AND e.victim_id = p.participant_id AND e.pos_x IS NOT NULL""",
+        (match_id,),
+    ).fetchall()
+    return [[r["pos_x"], r["pos_y"], int(r["minute"])] for r in rows]
+
+
 def all_audits(conn: sqlite3.Connection, limit: int = 100) -> list[dict]:
     rows = conn.execute(
-        """SELECT a.verdict_json, a.model, a.cost_usd, m.game_start, m.game_duration_s,
-                  f.my_champion, f.enemy_jungler_champion, f.y_win
+        """SELECT a.match_id, a.verdict_json, a.model, a.cost_usd, m.game_start,
+                  m.game_duration_s, f.my_champion, f.enemy_jungler_champion, f.y_win
            FROM audits a JOIN matches m USING (match_id) JOIN features f USING (match_id)
            ORDER BY m.game_start DESC LIMIT ?""",
         (limit,),
@@ -244,6 +256,7 @@ def all_audits(conn: sqlite3.Connection, limit: int = 100) -> list[dict]:
             "verdict": json.loads(r["verdict_json"]),
             "model": r["model"],
             "cost": r["cost_usd"],
+            "deaths": _match_deaths(conn, r["match_id"]),
         }
         for r in rows
     ]

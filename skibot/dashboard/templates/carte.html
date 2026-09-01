@@ -5,8 +5,9 @@
 <div class="eyebrow">Carte</div>
 <h1 class="hero" style="font-size: clamp(30px, 4vw, 44px)">Où je meurs, où je tue</h1>
 <p class="hero-sub">
-  Positions réelles de mes kills et de mes morts (events de timeline, ère courante).
-  Les wards ne sont pas cartographiées : Riot n'en fournit pas les positions.
+  Positions réelles issues des events de timeline (ère courante), victoires et défaites
+  <strong>côte à côte</strong> pour voir ce qui change. Les wards ne sont pas
+  cartographiées : Riot n'en fournit pas les positions.
 </p>
 
 <div class="panel">
@@ -14,35 +15,35 @@
     <button data-v="deaths" class="on">Mes morts</button>
     <button data-v="kills">Mes kills</button>
   </div>
-  <div class="filters" id="f-result">
-    <button data-v="all" class="on">Toutes</button>
-    <button data-v="win">Victoires</button>
-    <button data-v="loss">Défaites</button>
-  </div>
   <div class="filters" id="f-phase">
     <button data-v="all" class="on">Toute la game</button>
     <button data-v="early">Avant 15 min</button>
     <button data-v="mid">15–25 min</button>
     <button data-v="late">Après 25 min</button>
   </div>
-  <div class="map-wrap"><canvas id="map" width="560" height="560"></canvas></div>
+  <div class="map-duo">
+    <figure>
+      <canvas id="map-win" width="470" height="470"></canvas>
+      <figcaption class="W">Victoires · <span id="count-win"></span> point(s)</figcaption>
+    </figure>
+    <figure>
+      <canvas id="map-loss" width="470" height="470"></canvas>
+      <figcaption class="L">Défaites · <span id="count-loss"></span> point(s)</figcaption>
+    </figure>
+  </div>
   <p class="audit-lim" style="margin-top: 12px; text-align: center">
-    <span id="count"></span> point(s) affichés — {{ points.deaths | length }} morts et
-    {{ points.kills | length }} kills en base depuis {{ points.era_start }}.
+    {{ points.deaths | length }} morts et {{ points.kills | length }} kills en base
+    depuis {{ points.era_start }} [prouvé — events timeline].
   </p>
 </div>
 
 <script>
 const DATA = {{ points | tojson }};
-// bornes officielles de la Faille (map11) pour projeter les coordonnées Riot
 const MIN_X = -120, MAX_X = 14870, MIN_Y = -120, MAX_Y = 14881;
-const canvas = document.getElementById("map");
-const ctx = canvas.getContext("2d");
 const img = new Image();
 img.crossOrigin = "anonymous";
 img.src = "https://ddragon.leagueoflegends.com/cdn/16.17.1/img/map/map11.png";
-
-const state = { type: "deaths", result: "all", phase: "all" };
+const state = { type: "deaths", phase: "all" };
 
 function phaseOk(minute) {
   if (state.phase === "early") return minute < 15;
@@ -51,7 +52,9 @@ function phaseOk(minute) {
   return true;
 }
 
-function draw() {
+function drawOne(canvasId, countId, wantWin) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
   const w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
   ctx.globalAlpha = 0.9;
@@ -60,21 +63,24 @@ function draw() {
   ctx.fillStyle = state.type === "deaths" ? "#ff5f57" : "#2997ff";
   let n = 0;
   for (const [x, y, minute, win] of DATA[state.type]) {
-    if (state.result === "win" && !win) continue;
-    if (state.result === "loss" && win) continue;
-    if (!phaseOk(minute)) continue;
+    if (Boolean(win) !== wantWin || !phaseOk(minute)) continue;
     const px = ((x - MIN_X) / (MAX_X - MIN_X)) * w;
-    const py = h - ((y - MIN_Y) / (MAX_Y - MIN_Y)) * h;  // axe Y inversé
+    const py = h - ((y - MIN_Y) / (MAX_Y - MIN_Y)) * h;
     ctx.beginPath();
-    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.arc(px, py, 3.2, 0, Math.PI * 2);
     ctx.fill();
     n++;
   }
   ctx.globalAlpha = 1;
-  document.getElementById("count").textContent = n;
+  document.getElementById(countId).textContent = n;
 }
 
-for (const [id, key] of [["f-type", "type"], ["f-result", "result"], ["f-phase", "phase"]]) {
+function draw() {
+  drawOne("map-win", "count-win", true);
+  drawOne("map-loss", "count-loss", false);
+}
+
+for (const [id, key] of [["f-type", "type"], ["f-phase", "phase"]]) {
   document.getElementById(id).addEventListener("click", e => {
     const btn = e.target.closest("button");
     if (!btn) return;

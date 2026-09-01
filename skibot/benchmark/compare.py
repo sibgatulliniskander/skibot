@@ -25,6 +25,9 @@ COMPARE_METRICS = [
     "early_gank_kills", "early_jungle_duel_kills", "solo_kills",
     "epic_monster_steals", "vision_advantage_vs_ejgl",
     "kill_participation", "damage_share", "pings_total", "on_my_way_pings",
+    # source timeline, identique des deux côtés (backfill_timelines côté bench)
+    "deaths_pre15", "deaths_post25", "gold_diff_ejgl_10", "gold_diff_ejgl_15",
+    "xp_diff_ejgl_10", "cs_diff_ejgl_10",
 ]
 MIN_N = 30
 

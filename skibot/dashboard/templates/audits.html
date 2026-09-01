@@ -24,7 +24,8 @@
   <h2>{{ audits | length }} verdict(s)</h2>
   {% if audits %}
     {% for a in audits %}
-    <div class="audit">
+    <div class="audit audit-flex">
+      <div class="audit-body">
       <p class="audit-head">
         <span class="{{ 'W' if a.win else 'L' }}">{{ 'W' if a.win else 'L' }}</span>
         {{ a.champ }} vs {{ a.vs }} · {{ a.date }} · {{ a.duration }}
@@ -47,10 +48,46 @@
       <p class="fact-ids">tags : {{ a.verdict.tags | join(' · ') }}</p>
       {% endif %}
       <p class="audit-lim">Limites : {{ a.verdict.limites }}</p>
+      </div>
+      {% if a.deaths %}
+      <canvas class="mini-map" width="150" height="150"
+              data-deaths='{{ a.deaths | tojson }}'></canvas>
+      {% endif %}
     </div>
     {% endfor %}
   {% else %}
   <p class="audit-lim">Aucun verdict — lancer `skibot audit`.</p>
   {% endif %}
 </div>
+<script>
+// mini-cartes : les morts de la game de chaque verdict (positions timeline)
+const MIN_X = -120, MAX_X = 14870, MIN_Y = -120, MAX_Y = 14881;
+const mapImg = new Image();
+mapImg.crossOrigin = "anonymous";
+mapImg.src = "https://ddragon.leagueoflegends.com/cdn/16.17.1/img/map/map11.png";
+function drawMinis() {
+  for (const canvas of document.querySelectorAll(".mini-map")) {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = 0.85;
+    if (mapImg.complete && mapImg.naturalWidth) ctx.drawImage(mapImg, 0, 0, w, h);
+    ctx.globalAlpha = 0.95;
+    for (const [x, y, minute] of JSON.parse(canvas.dataset.deaths)) {
+      const px = ((x - MIN_X) / (MAX_X - MIN_X)) * w;
+      const py = h - ((y - MIN_Y) / (MAX_Y - MIN_Y)) * h;
+      ctx.fillStyle = "#ff5f57";
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 8px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(minute, px, py + 2.8);
+    }
+  }
+}
+mapImg.onload = drawMinis;
+drawMinis();
+</script>
 {% endblock %}

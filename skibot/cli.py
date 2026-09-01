@@ -165,8 +165,10 @@ def bench_collect(max_players, games_per_player):
         raise click.ClickException(str(e))
     except RiotApiError as e:
         raise click.ClickException(f"Erreur API Riot : {e}")
-    click.echo("\n{} nouvelle(s) game(s), {} lignes jungler ajoutees ({} au total).".format(
-        s["new_games"], s["new_junglers"], s["total_junglers"]))
+    n_tl = bench_mod.backfill_timelines(conn, client, log=click.echo)
+    click.echo("\n{} nouvelle(s) game(s), {} lignes jungler ajoutees ({} au total), "
+               "{} game(s) enrichie(s) en timeline.".format(
+        s["new_games"], s["new_junglers"], s["total_junglers"], n_tl))
 
 
 @main.command()

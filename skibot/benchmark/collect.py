@@ -149,3 +149,84 @@ def extract_junglers(match: dict, tier: str, meta_cache: dict) -> list[dict]:
             "fetched_at": datetime.now(UTC).isoformat(timespec="seconds"),
         })
     return rows
+
+
+TIMELINE_COLS = ("deaths_pre15", "deaths_post25", "gold_diff_ejgl_10",
+                 "gold_diff_ejgl_15", "xp_diff_ejgl_10", "cs_diff_ejgl_10")
+
+
+def timeline_metrics(timeline: dict, jungler_pids: list[int]) -> dict[int, dict]:
+    """Morts par phase + écarts @10/@15 entre les deux junglers d'une game."""
+    frames = (timeline.get("info") or {}).get("frames") or []
+    out: dict[int, dict] = {
+        pid: {"deaths_pre15": 0, "deaths_post25": 0} for pid in jungler_pids
+    }
+    for fr in frames:
+        for ev in fr.get("events") or []:
+            victim = ev.get("victimId")
+            if ev.get("type") == "CHAMPION_KILL" and victim in out:
+                minute = ev.get("timestamp", 0) // 60_000
+                if minute < 15:
+                    out[victim]["deaths_pre15"] += 1
+                elif minute >= 25:
+                    out[victim]["deaths_post25"] += 1
+    if len(jungler_pids) == 2:
+        a, b = jungler_pids
+        for idx in (10, 15):
+            if len(frames) <= idx:
+                continue
+            pf = frames[idx].get("participantFrames") or {}
+            fa, fb = pf.get(str(a)), pf.get(str(b))
+            if not fa or not fb:
+                continue
+            gold = fa.get("totalGold", 0) - fb.get("totalGold", 0)
+            out[a][f"gold_diff_ejgl_{idx}"] = gold
+            out[b][f"gold_diff_ejgl_{idx}"] = -gold
+            if idx == 10:
+                xp = fa.get("xp", 0) - fb.get("xp", 0)
+                cs_a = fa.get("minionsKilled", 0) + fa.get("jungleMinionsKilled", 0)
+                cs_b = fb.get("minionsKilled", 0) + fb.get("jungleMinionsKilled", 0)
+                out[a]["xp_diff_ejgl_10"] = xp
+                out[b]["xp_diff_ejgl_10"] = -xp
+                out[a]["cs_diff_ejgl_10"] = cs_a - cs_b
+                out[b]["cs_diff_ejgl_10"] = cs_b - cs_a
+    return out
+
+
+def backfill_timelines(
+    conn: sqlite3.Connection,
+    client: RiotClient,
+    *,
+    limit: int = 400,
+    log: Callable[[str], None] = print,
+) -> int:
+    """Complète les métriques timeline des games bench qui n'en ont pas encore."""
+    todo = conn.execute(
+        """SELECT match_id, GROUP_CONCAT(participant_id) pids FROM bench_games
+           WHERE deaths_pre15 IS NULL GROUP BY match_id LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    if not todo:
+        return 0
+    log(f"Complément timelines : {len(todo)} game(s) à enrichir...")
+    n = 0
+    for i, r in enumerate(todo, 1):
+        pids = [int(x) for x in r["pids"].split(",")]
+        try:
+            timeline = client.timeline(r["match_id"])
+        except NotFoundError:
+            # timeline indisponible : marquer 0 morts serait mentir -> on laisse NULL
+            continue
+        metrics = timeline_metrics(timeline, pids)
+        with conn:
+            for pid, m in metrics.items():
+                conn.execute(
+                    "UPDATE bench_games SET "
+                    + ", ".join(f"{c} = :{c}" for c in m)
+                    + " WHERE match_id = :mid AND participant_id = :pid",
+                    {**m, "mid": r["match_id"], "pid": pid},
+                )
+        n += 1
+        if i % 50 == 0:
+            log(f"  {i}/{len(todo)}")
+    return n
