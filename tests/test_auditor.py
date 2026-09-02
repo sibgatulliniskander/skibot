@@ -196,3 +196,17 @@ def test_run_window_excludes_old_games(conn):
     s = audit.run(conn, since_days=None, client=FakeClient([json.dumps(make_verdict(ids[:3]))]),
                   log=lambda m: None)
     assert s["audited"] == 1  # --all : fenêtre levée
+
+
+def test_run_targets_eligible_accounts_only(conn, monkeypatch):
+    insert_game(conn)  # account NULL (fixture) : toujours éligible
+    conn.execute("UPDATE features SET account = 'Smurf#666' WHERE match_id = 'EUW1_1'")
+    monkeypatch.setenv("RIOT_ANALYSIS_ACCOUNTS", "Main#EUW")
+    s = audit.run(conn, since_days=None, client=FakeClient([]), log=lambda m: None)
+    assert s["audited"] == 0  # game du smurf : hors cible par défaut
+    monkeypatch.delenv("RIOT_ANALYSIS_ACCOUNTS")
+    d = dossier.build(conn, "EUW1_1")
+    ids = [f["id"] for f in d["facts"]]
+    s = audit.run(conn, since_days=None,
+                  client=FakeClient([json.dumps(make_verdict(ids[:3]))]), log=lambda m: None)
+    assert s["audited"] == 1  # sans filtre configuré, tout est audité

@@ -234,10 +234,14 @@ def latest_audits(conn: sqlite3.Connection, n: int = 3) -> list[dict]:
 
 def hypothesis_tags(conn: sqlite3.Connection, last_n: int = 20) -> dict:
     """Compte les tags des derniers verdicts : hypothèses candidates pour l'analyste."""
+    acond, aparams = account_filter("f.account")
     rows = conn.execute(
-        """SELECT a.verdict_json FROM audits a JOIN matches m USING (match_id)
+        f"""SELECT a.verdict_json FROM audits a
+           JOIN matches m USING (match_id)
+           JOIN features f USING (match_id)
+           WHERE {acond}
            ORDER BY m.game_start DESC LIMIT ?""",
-        (last_n,),
+        (*aparams, last_n),
     ).fetchall()
     counts: dict[str, int] = {}
     for r in rows:

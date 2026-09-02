@@ -13,7 +13,7 @@ import sqlite3
 from collections.abc import Callable
 from datetime import UTC, datetime
 
-from ..config import PROJECT_ROOT
+from ..config import PROJECT_ROOT, account_filter
 from . import dossier
 from .prompts import SYSTEM_PROMPT, TAGS, VERDICT_SCHEMA
 
@@ -226,13 +226,18 @@ def run(
     min_start = 0
     if since_days is not None:
         min_start = int((datetime.now(UTC).timestamp() - since_days * 86_400) * 1000)
+    # même frontière que les analyses (règle n°11) : les games du smurf ne
+    # nourrissent ni verdicts par défaut ni compteur d'hypothèses.
+    # Échappatoire : `skibot audit --match <id>` audite n'importe quelle game.
+    acond, aparams = account_filter("f.account")
     todo = conn.execute(
-        """SELECT f.match_id FROM features f
+        f"""SELECT f.match_id FROM features f
            JOIN matches m USING (match_id)
            LEFT JOIN audits a USING (match_id)
            WHERE a.match_id IS NULL AND f.is_remake = 0 AND m.game_start >= ?
+             AND {acond}
            ORDER BY m.game_start DESC LIMIT ?""",
-        (min_start, limit),
+        (min_start, *aparams, limit),
     ).fetchall()
     results = []
     baselines = dossier.compute_baselines(conn)
