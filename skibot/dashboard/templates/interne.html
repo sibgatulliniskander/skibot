@@ -7,6 +7,18 @@
 <p class="hero-sub">Leviers candidats et dernières games — rien ici n'est un verdict.</p>
 
 <div class="panel">
+  <h2>Actions — tout se lance ici, plus besoin du terminal</h2>
+  <div class="filters" id="actions">
+    <button data-a="maj">🔄 Mettre à jour</button>
+    <button data-a="audit" data-confirm="Auditer jusqu'à 10 games des 7 derniers jours (~50 centimes) ?">🧠 Auditer</button>
+    <button data-a="analyze">📈 Analyser</button>
+    <button data-a="bench">⚖️ Benchmark</button>
+    <button data-a="bench_collect" data-confirm="Crawl Diamant complet (~10-20 min de requêtes Riot) ?">🕷 Crawl Diamant</button>
+  </div>
+  <pre id="action-log" class="fact-ids" style="white-space: pre-wrap; margin: 0; max-height: 220px; overflow-y: auto"></pre>
+</div>
+
+<div class="panel">
   <h2>Consigne active</h2>
   <p class="consigne-statement">{{ consigne }}</p>
 </div>
@@ -87,6 +99,36 @@
 </div>
 
 <script>
+// ---- panneau Actions : lancement + suivi en direct ----
+const logEl = document.getElementById("action-log");
+let polling = null;
+
+async function refreshStatus() {
+  const s = await (await fetch("/action/status")).json();
+  const lines = [];
+  for (const [name, j] of Object.entries(s.jobs)) {
+    const icon = j.status === "running" ? "⏳" : j.status === "ok" ? "✅" : "❌";
+    lines.push(`${icon} ${j.label} — ${j.status}`);
+    for (const l of j.log_tail) lines.push(`   ${l}`);
+  }
+  logEl.textContent = lines.join("\n") || "Aucune action lancée pour l'instant.";
+  for (const b of document.querySelectorAll("#actions button")) {
+    b.disabled = Boolean(s.running);
+  }
+  if (!s.running && polling) { clearInterval(polling); polling = null; }
+}
+
+document.getElementById("actions").addEventListener("click", async e => {
+  const btn = e.target.closest("button");
+  if (!btn || btn.disabled) return;
+  if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
+  const r = await (await fetch(`/action/${btn.dataset.a}`, { method: "POST" })).json();
+  if (!r.ok) { logEl.textContent = "⚠ " + r.message; return; }
+  if (!polling) polling = setInterval(refreshStatus, 1500);
+  refreshStatus();
+});
+refreshStatus();
+
 const T = {{ trends | tojson }};
 const MUTED = "#86868b", GRID = "rgba(255,255,255,.06)";
 Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;

@@ -85,7 +85,7 @@ def dashboard(port, host):
     from .dashboard.app import create_app
     app = create_app()
     click.echo(f"Dashboard : http://{host}:{port}  (Ctrl+C pour arreter)")
-    app.run(host=host, port=port, debug=False)
+    app.run(host=host, port=port, debug=False, threaded=True)
 
 
 @main.command()

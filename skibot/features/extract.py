@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 
 from . import ddragon
 
-EXTRACTOR_VERSION = 2
+EXTRACTOR_VERSION = 3
 FAMILIARITY_WINDOW_DAYS = 30
 MS = 60_000  # une minute en ms
 
@@ -319,7 +319,13 @@ def _timeline_features(conn, f, mid, my_pid, my_team, pid_team, ejgl):
          for e in monsters if e["monster_type"] == "ATAKHAN"),
         None,
     )
-    soul = next((e for e in evs if e["type"] == "DRAGON_SOUL_GIVEN"), None)
+    # Riot émet 2 variantes de DRAGON_SOUL_GIVEN : l'annonce du type d'âme
+    # (teamId 0, au spawn du 3e dragon) et l'attribution réelle (teamId 100/200).
+    # Ne retenir que l'attribution — vérifié contre l'équipe au 4e dragon (429/429).
+    soul = next(
+        (e for e in evs if e["type"] == "DRAGON_SOUL_GIVEN" and e["ev_team"] in (100, 200)),
+        None,
+    )
     f["soul_team"] = (1 if soul["ev_team"] == my_team else 0) if soul else None
 
     # ev_team = équipe qui PERD le bâtiment / la plate

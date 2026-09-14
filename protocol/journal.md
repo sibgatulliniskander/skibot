@@ -38,3 +38,12 @@ consigne éventuelle serait « maintenir », et le lien X→Y reste non causal :
 pas de contrôle). Pool : discipline à 86 % (6 games hors pool en ranked, une
 par champion). Labo-smurf : test Ekko/Karthus NON réalisé (8 games seulement,
 Zyra/Talon/Brand) — échéance du slot AP du 21/09 à recalibrer.
+
+## 2026-09-14 (suite)
+Bug corrigé sur l'âme draconique (signalé par le joueur) : Riot émet un event
+d'annonce (teamId 0) avant l'attribution réelle — l'extracteur prenait le
+premier, d'où 100 % des âmes « adverses ». Correctif validé 429/429 contre
+l'équipe au 4e dragon ; soul_team devient le 20e effet confirmé (WR 82 % avec
+l'âme vs 9 % sans). Ekko/Karthus écartés par le joueur, slot AP reporté à
+décembre (pool.md). Panneau Actions ajouté au dashboard : collecte, audits,
+analyse, benchmark et crawl se lancent depuis /interne, plus besoin du terminal.

@@ -16,22 +16,13 @@ sauf révision du slot AP (voir échéance ci-dessous).
 compte 18 champions joués dont ~10 en « roulette » sous 20 games — dispersion
 stoppée [prouvé pour les chiffres, pratique répandue pour le coût].
 
-## Labo-smurf (skibimid#666 — hors analyses, règle n°11)
+## Slot AP — reporté à la revue de décembre (décision du 2026-09-14)
 
-Candidats au slot AP carry, à tester en reps (10-15 games chacun) :
-
-1. **Ekko** — jungler AP le plus joué du sample Diamant (25 picks, 52 % ±10,
-   dmg share 20 %) [prouvé — bench] ; son R rend les erreurs de positionnement
-   tardives rattrapables — la faiblesse documentée du joueur (late_deaths,
-   3 sources) [inféré — adéquation de kit, non prouvée].
-2. **Karthus** — indice carry AP maximal du sample (25 %), 60 % ±16 sur 10
-   picks ; champion de farm (force n°1 mesurée du joueur) ; passif qui carry
-   après la mort [prouvé — bench ; inféré pour l'adéquation].
-3. **Diana** — joker (71 % sur 7 games perso vs 30,8 % ±14 dans le sample :
-   deux signaux minuscules contradictoires).
-
-**Échéance : ~21 septembre 2026** — choix du titulaire AP sur la data smurf
-(WR, morts tardives, ressenti d'adhérence) + confirmation en ranked.
+Le test smurf Ekko/Karthus n'a pas été réalisé (8 games smurf en 2 semaines,
+aucun rep des candidats) et le joueur écarte les deux candidats. Pendant ce
+temps, le main tourne à 68 % de WR sur Viego et Émeraude IV est atteint :
+on ne répare pas ce qui gagne. Le slot AP reste VACANT jusqu'à la revue du
+1er décembre — en ranked : Viego + Kha'Zix, rien d'autre.
 
 ## Principes appliqués
 

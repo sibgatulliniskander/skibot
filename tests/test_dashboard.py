@@ -153,3 +153,12 @@ def test_lp_curve_filters_official_account(app):
     finally:
         queries.set_official(None)
     conn.close()
+
+
+def test_action_routes(app):
+    c = app.test_client()
+    r = c.get("/action/status")
+    assert r.status_code == 200
+    assert "running" in r.get_json()
+    r = c.post("/action/nimporte_quoi")
+    assert r.status_code == 409

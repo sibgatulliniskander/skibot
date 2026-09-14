@@ -9,7 +9,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template
 
 from ..config import PROJECT_ROOT, load_config
 from . import queries
@@ -123,5 +123,16 @@ def create_app(db_path: Path | None = None) -> Flask:
             )
         finally:
             conn.close()
+
+    @app.route("/action/<name>", methods=["POST"])
+    def action_start(name):
+        from . import actions
+        ok, msg = actions.start(name)
+        return jsonify({"ok": ok, "message": msg}), (202 if ok else 409)
+
+    @app.route("/action/status")
+    def action_status():
+        from . import actions
+        return jsonify(actions.status())
 
     return app

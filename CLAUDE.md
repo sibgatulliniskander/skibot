@@ -49,6 +49,10 @@ Key design decisions:
   (`participants`, `timeline_frames`, `timeline_events`) promote analysis-friendly
   columns; unpromoted event fields go to `extra_json` — except the bulky
   `victimDamageDealt`/`victimDamageReceived`, which live only in the raw JSON.
+- **DRAGON_SOUL_GIVEN quirk**: Riot emits an announce event (teamId 0, when
+  the soul type is revealed) AND an award event (teamId 100/200). Only the
+  award counts — features/extract.py filters teamId in (100, 200); validated
+  429/429 against the 4th-dragon team.
 - **`participant_id` (1-10) is the join key** across participants/frames/events.
   `WARD_PLACED` events use `creatorId`, mapped into `participant_id` at ingest.
   Ward events have NO position in the Riot timeline (`pos_x`/`pos_y` NULL) — never
@@ -78,7 +82,11 @@ Key design decisions:
   filters; ward positions are never mapped, Riot does not provide them).
   Flask caches templates when not in debug: restart `skibot dashboard` after
   template edits. The Windows scheduled task (scripts/collect.bat) chains
-  collect + features hourly.
+  collect + features hourly. The /interne page has an Actions panel
+  (dashboard/actions.py): POST /action/<name> runs pipeline actions (maj,
+  audit, analyze, bench, bench_collect) in a background thread — one job at a
+  time (global lock), GET /action/status polls; run the server threaded=True.
+  SQLite connections set busy_timeout=15s (dashboard jobs vs hourly task).
 
 - Benchmark (skibot/benchmark/): crawls Diamond I-II jungler games (match DTO
   only, no timelines — 1 request/game, 2 junglers/game) into `bench_games`,

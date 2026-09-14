@@ -109,6 +109,8 @@ def make_timeline(match_id="EUW1_1"):
          "monsterType": "BARON_NASHOR", "killerTeamId": 100},
         {"timestamp": 27 * m, "type": "ELITE_MONSTER_KILL", "killerId": 1,
          "monsterType": "ATAKHAN", "killerTeamId": 100},
+        # annonce du type d'âme (teamId 0) AVANT l'attribution réelle : à ignorer
+        {"timestamp": 20 * m, "type": "DRAGON_SOUL_GIVEN", "teamId": 0, "name": "Air"},
         {"timestamp": 28 * m, "type": "DRAGON_SOUL_GIVEN", "teamId": 200, "name": "Air"},
         {"timestamp": 18 * m, "type": "BUILDING_KILL", "killerId": 1, "teamId": 200,
          "buildingType": "TOWER_BUILDING", "towerType": "OUTER_TURRET", "laneType": "MID_LANE"},
