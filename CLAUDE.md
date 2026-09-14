@@ -90,7 +90,12 @@ Key design decisions:
   The dashboard auto-starts at Windows logon (scripts/dashboard.vbs copied
   with an absolute path into the user's Startup folder; log: data/dashboard.log)
   — after code changes, kill the running python/skibot dashboard process and
-  relaunch the Startup .vbs (or reboot) to serve the new code.
+  relaunch the Startup .vbs (or reboot) to serve the new code. The desktop
+  shortcut "skibot dashboard.lnk" runs scripts/open-dashboard.vbs, which
+  restarts the server if it is down before opening /interne (self-healing).
+  When relaunching the server from a Claude tool call, spawn it DETACHED
+  (Invoke-CimMethod Win32_Process Create) — a child of the tool's shell dies
+  with the tool.
 
 - Benchmark (skibot/benchmark/): crawls Diamond I-II jungler games (match DTO
   only, no timelines — 1 request/game, 2 junglers/game) into `bench_games`,
