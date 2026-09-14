@@ -87,6 +87,10 @@ Key design decisions:
   audit, analyze, bench, bench_collect) in a background thread — one job at a
   time (global lock), GET /action/status polls; run the server threaded=True.
   SQLite connections set busy_timeout=15s (dashboard jobs vs hourly task).
+  The dashboard auto-starts at Windows logon (scripts/dashboard.vbs copied
+  with an absolute path into the user's Startup folder; log: data/dashboard.log)
+  — after code changes, kill the running python/skibot dashboard process and
+  relaunch the Startup .vbs (or reboot) to serve the new code.
 
 - Benchmark (skibot/benchmark/): crawls Diamond I-II jungler games (match DTO
   only, no timelines — 1 request/game, 2 junglers/game) into `bench_games`,
