@@ -35,6 +35,8 @@ def collect(
         puuid = account["puuid"]
         riot_id = f"{account.get('gameName')}#{account.get('tagLine')}"
         log(f"Compte résolu : {riot_id}")
+        for old in sync_account_name(conn, puuid, riot_id):
+            log(f"  ancien nom {old} rattaché à {riot_id}")
 
         # Borne temporelle PAR COMPTE : dernière game connue de ce compte,
         # avec 1 h de marge (les doublons sont filtrés via known).
@@ -90,6 +92,64 @@ def collect(
         "rank": ranks[0][1] if ranks else None,
         "ranks": ranks,
     }
+
+
+def sync_account_name(conn: sqlite3.Connection, puuid: str, riot_id: str) -> list[str]:
+    """Rattache les anciens Riot ID du compte à son nom actuel (après un renommage).
+
+    Anciens noms = noms portés par ce PUUID dans les payloads de games, plus les
+    alias qui pointaient déjà vers l'un d'eux (renommages en chaîne). Les noms
+    portés sous un ancien PUUID (autre clé API) sont couverts par le nom commun.
+    Renvoie les noms nouvellement rattachés.
+    """
+    names = {
+        r["riot_id"] for r in conn.execute(
+            "SELECT DISTINCT riot_id FROM participants "
+            "WHERE is_me = 1 AND puuid = ? AND riot_id IS NOT NULL",
+            (puuid,),
+        )
+    }
+    if names:
+        ph = ", ".join("?" for _ in names)
+        names |= {
+            r["canonical"] for r in conn.execute(
+                f"SELECT canonical FROM account_aliases WHERE alias IN ({ph})", tuple(names)
+            )
+        }
+        ph = ", ".join("?" for _ in names)
+        names |= {
+            r["alias"] for r in conn.execute(
+                f"SELECT alias FROM account_aliases WHERE canonical IN ({ph})", tuple(names)
+            )
+        }
+    names.discard(riot_id)
+    known = {
+        r["alias"] for r in conn.execute(
+            "SELECT alias FROM account_aliases WHERE canonical = ?", (riot_id,)
+        )
+    }
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    with conn:
+        conn.execute(
+            "INSERT INTO account_aliases (alias, canonical, updated_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(alias) DO UPDATE SET canonical = excluded.canonical, "
+            "updated_at = excluded.updated_at",
+            (riot_id, riot_id, now),
+        )
+        for old in names:
+            conn.execute(
+                "INSERT INTO account_aliases (alias, canonical, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(alias) DO UPDATE SET canonical = excluded.canonical, "
+                "updated_at = excluded.updated_at",
+                (old, riot_id, now),
+            )
+        if names:
+            ph = ", ".join("?" for _ in names)
+            conn.execute(f"UPDATE features SET account = ? WHERE account IN ({ph})",
+                         (riot_id, *names))
+            conn.execute(f"UPDATE rank_snapshots SET riot_id = ? WHERE riot_id IN ({ph})",
+                         (riot_id, *names))
+    return sorted(names - known)
 
 
 def snapshot_rank(

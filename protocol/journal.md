@@ -47,3 +47,9 @@ l'équipe au 4e dragon ; soul_team devient le 20e effet confirmé (WR 82 % avec
 l'âme vs 9 % sans). Ekko/Karthus écartés par le joueur, slot AP reporté à
 décembre (pool.md). Panneau Actions ajouté au dashboard : collecte, audits,
 analyse, benchmark et crawl se lancent depuis /interne, plus besoin du terminal.
+
+## 2026-10-19
+Main renommé : skibilipompom#666 → **Isko#6677** (même compte, même PUUID). Les
+925 games et 335 relevés de rang de l'ancien nom sont rattachés au nouveau
+(table d'alias) : historique, split d'analyse et courbe LP inchangés. Rang au
+19/10 : Émeraude IV — 22 LP.

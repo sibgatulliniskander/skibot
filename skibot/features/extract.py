@@ -162,6 +162,16 @@ def _session_context(hist: list[sqlite3.Row]) -> dict[str, dict]:
     return ctx
 
 
+def _current_name(conn: sqlite3.Connection, riot_id: str | None) -> str | None:
+    """Nom actuel du compte (Riot ID porté au moment de la game -> après renommages)."""
+    if riot_id is None:
+        return None
+    row = conn.execute(
+        "SELECT canonical FROM account_aliases WHERE alias = ?", (riot_id,)
+    ).fetchone()
+    return row["canonical"] if row else riot_id
+
+
 def _extract_one(
     conn: sqlite3.Connection, h: sqlite3.Row, ctx: dict, meta: dict | None
 ) -> dict:
@@ -181,7 +191,7 @@ def _extract_one(
         "computed_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "extractor_version": EXTRACTOR_VERSION,
         "y_win": me["win"],
-        "account": me["riot_id"],
+        "account": _current_name(conn, me["riot_id"]),
         "is_remake": 1 if raw_me.get("gameEndedInEarlySurrender") else 0,
         "ended_in_surrender": 1 if raw_me.get("gameEndedInSurrender") else 0,
         **ctx,

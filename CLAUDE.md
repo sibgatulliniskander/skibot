@@ -66,6 +66,14 @@ Key design decisions:
   smurf games into the SAME db (same player = same process; per-account
   incremental start_time). rank_snapshots.riot_id tags each snapshot; the
   public LP curve filters to the main account (queries.set_official).
+- **Riot ID renames**: features.account and rank_snapshots.riot_id always hold
+  the account's CURRENT name. On each collect, sync_account_name (collect.py)
+  maps every former name (from participants.riot_id of that PUUID, plus chained
+  aliases) to the current one in `account_aliases`, and rewrites both columns;
+  features extraction resolves names through that table. PUUID alone is not a
+  stable identity: Riot encrypts it per API key (the main has two PUUIDs in db).
+  After a rename, only update RIOT_GAME_NAME/RIOT_TAG_LINE/RIOT_ALT_ACCOUNTS and
+  RIOT_ANALYSIS_ACCOUNTS in .env, then run a collect.
 - **`rank_snapshots` appends the current rank on every collect** — it is the only
   possible source of LP history (the League API has no historical endpoint).
 - **Migrations**: numbered SQL files in `migrations/`, applied in filename order,
